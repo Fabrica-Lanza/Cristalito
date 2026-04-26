@@ -550,9 +550,14 @@
         <div class="list-info"><div class="list-name">Heladeras</div><div class="list-sub">Consignación, estado, asignación</div></div>
         <div style="color:var(--text3);font-size:18px">›</div>
       </div>
+      <div id="item-usuarios" class="list-item" onclick="navTo('usuarios')" style="cursor:pointer;display:none">
+        <div class="list-avatar">👤</div>
+        <div class="list-info"><div class="list-name">Usuarios</div><div class="list-sub">Agregar, editar, desactivar</div></div>
+        <div style="color:var(--text3);font-size:18px">›</div>
+      </div>
       <div class="list-item" onclick="navTo('config')" style="cursor:pointer">
         <div class="list-avatar">⚙️</div>
-        <div class="list-info"><div class="list-name">Configuración</div><div class="list-sub">Precios, máquinas, usuarios</div></div>
+        <div class="list-info"><div class="list-name">Configuración</div><div class="list-sub">Precios, máquinas, URL backend</div></div>
         <div style="color:var(--text3);font-size:18px">›</div>
       </div>
     </div>
@@ -562,6 +567,18 @@
       <div>Cristalito v1.0 — Fase 1</div>
       <div>Fábrica Frigorífica Lanza · 2026</div>
     </div>
+  </div>
+
+  <!-- ── USUARIOS ── -->
+  <div class="screen pt-safe" id="screen-usuarios">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <button onclick="navBack()" style="background:var(--card);border:none;border-radius:10px;padding:8px 12px;font-size:16px;cursor:pointer;box-shadow:var(--shadow)">←</button>
+      <div class="section-title" style="margin:0">Usuarios</div>
+    </div>
+    <div class="card" style="padding:0 14px">
+      <div id="usuarios-lista"></div>
+    </div>
+    <button class="fab" onclick="openModal('modal-nuevo-usuario')">+</button>
   </div>
 
   <!-- ── PRODUCCIÓN ── -->
@@ -1070,6 +1087,41 @@
   </div>
 </div>
 
+<!-- Modal: Nuevo/Editar Usuario -->
+<div class="modal-overlay" id="modal-nuevo-usuario" onclick="overlayClose(event,'modal-nuevo-usuario')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-usuario-titulo">Nuevo Usuario</div>
+    <div class="modal-body">
+      <input type="hidden" id="u-email-original">
+      <div class="form-group">
+        <label class="form-label">Nombre</label>
+        <input class="form-input" type="text" id="u-nombre" placeholder="ej: Carlos">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email (opcional)</label>
+        <input class="form-input" type="email" id="u-email" placeholder="ej: carlos@lanza.com">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Rol</label>
+          <select class="form-input" id="u-rol">
+            <option value="admin">Admin</option>
+            <option value="vendedor">Vendedor</option>
+            <option value="operario">Operario</option>
+            <option value="operario/vendedor">Operario/Vendedor</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">PIN (4 dígitos)</label>
+          <input class="form-input" type="number" id="u-pin" placeholder="1234" maxlength="4">
+        </div>
+      </div>
+      <button class="btn btn-primary btn-block" style="margin-top:8px" onclick="guardarUsuario()">Guardar usuario</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div id="toast" style="position:fixed;bottom:calc(var(--nav-h)+16px);left:50%;transform:translateX(-50%) translateY(20px);background:var(--topbar);color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:9999;opacity:0;transition:all 0.3s;pointer-events:none;white-space:nowrap">
   ✓ Guardado
@@ -1237,6 +1289,7 @@ async function doLogin() {
   }
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('userBtn').textContent = currentUser.emoji;
+  if (currentUser.rol === 'admin') { var el = document.getElementById('item-usuarios'); if (el) el.style.display = 'flex'; }
   initApp();
 }
 
@@ -1308,6 +1361,7 @@ function navTo(screen) {
   if (screen === 'reportes') renderReportes('semana');
   if (screen === 'heladeras') renderHeladeras();
   if (screen === 'config') renderConfig();
+  if (screen === 'usuarios') renderUsuariosScreen();
 }
 
 function navBack() { navTo(prevScreen || 'mas'); }
@@ -1867,6 +1921,102 @@ function registrarHeladera() {
   closeModal('modal-heladera');
   showToast('Heladera agregada');
   renderHeladeras();
+}
+
+// ── USUARIOS ────────────────────────────────────────────────────
+function renderUsuariosScreen() {
+  var lista = document.getElementById('usuarios-lista');
+  if (!lista) return;
+  var url = localStorage.getItem('appsscript_url') || '';
+  if (!url) { lista.innerHTML = '<div class="empty"><div class="empty-text">Configurá el backend primero</div></div>'; return; }
+  lista.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3);font-size:13px">Cargando...</div>';
+  fetch(url + '?accion=getUsuariosAdmin')
+    .then(function(r) { return r.json(); })
+    .then(function(json) {
+      if (!json.ok || !json.data || json.data.length === 0) {
+        lista.innerHTML = '<div class="empty"><div class="empty-text">Sin usuarios</div></div>';
+        return;
+      }
+      lista.innerHTML = '';
+      json.data.forEach(function(u) {
+        var activo = String(u.Activo).toLowerCase() === 'true';
+        var div = document.createElement('div');
+        div.className = 'list-item';
+        div.style.opacity = activo ? '1' : '0.45';
+        div.innerHTML =
+          '<div class="list-avatar" style="background:var(--ice);font-size:14px;font-weight:700;color:var(--accent)">' + (u.Nombre||'?').slice(0,2).toUpperCase() + '</div>' +
+          '<div class="list-info">' +
+            '<div class="list-name">' + (u.Nombre||'') + '</div>' +
+            '<div class="list-sub">' + (u.Rol||'') + (activo ? '' : ' · Inactivo') + '</div>' +
+          '</div>' +
+          '<div style="display:flex;gap:8px;align-items:center">' +
+            '<button style="background:var(--ice);border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;color:var(--accent);cursor:pointer" onclick="editarUsuario(' + JSON.stringify(u) + ')">Editar</button>' +
+            '<button style="background:' + (activo ? '#FDECEE' : '#E8F8EE') + ';border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;color:' + (activo ? 'var(--red)' : 'var(--green)') + ';cursor:pointer" onclick="toggleUsuario('' + u.Email + '',' + !activo + ')">' + (activo ? 'Desactivar' : 'Activar') + '</button>' +
+          '</div>';
+        lista.appendChild(div);
+      });
+    })
+    .catch(function() {
+      lista.innerHTML = '<div class="empty"><div class="empty-text">Error al cargar usuarios</div></div>';
+    });
+}
+
+function editarUsuario(u) {
+  document.getElementById('modal-usuario-titulo').textContent = 'Editar Usuario';
+  document.getElementById('u-nombre').value = u.Nombre || '';
+  document.getElementById('u-email').value = u.Email || '';
+  document.getElementById('u-email-original').value = u.Email || '';
+  document.getElementById('u-rol').value = u.Rol || 'vendedor';
+  document.getElementById('u-pin').value = u.Password || '';
+  openModal('modal-nuevo-usuario');
+}
+
+function nuevoUsuarioModal() {
+  document.getElementById('modal-usuario-titulo').textContent = 'Nuevo Usuario';
+  document.getElementById('u-nombre').value = '';
+  document.getElementById('u-email').value = '';
+  document.getElementById('u-email-original').value = '';
+  document.getElementById('u-rol').value = 'vendedor';
+  document.getElementById('u-pin').value = '';
+  openModal('modal-nuevo-usuario');
+}
+
+async function guardarUsuario() {
+  var nombre = document.getElementById('u-nombre').value.trim();
+  var email  = document.getElementById('u-email').value.trim();
+  var rol    = document.getElementById('u-rol').value;
+  var pin    = String(document.getElementById('u-pin').value).trim();
+  var emailOrig = document.getElementById('u-email-original').value;
+  if (!nombre) { showToast('Ingresá el nombre', '⚠️'); return; }
+  if (!pin || pin.length < 4) { showToast('El PIN debe tener 4 dígitos', '⚠️'); return; }
+  var url = localStorage.getItem('appsscript_url') || '';
+  if (!url) { showToast('Sin conexión al backend', '❌'); return; }
+  var res = await fetch(url, {
+    method: 'POST',
+    body: JSON.stringify({ accion: 'postUsuario', nombre: nombre, email: email, emailOriginal: emailOrig, rol: rol, pin: pin })
+  }).then(function(r) { return r.json(); }).catch(function() { return null; });
+  if (res && res.ok) {
+    closeModal('modal-nuevo-usuario');
+    showToast('Usuario guardado');
+    renderUsersGrid();
+    renderUsuariosScreen();
+  } else {
+    showToast(res ? res.error : 'Error al guardar', '❌');
+  }
+}
+
+async function toggleUsuario(email, activar) {
+  var url = localStorage.getItem('appsscript_url') || '';
+  if (!url) return;
+  var res = await fetch(url, {
+    method: 'POST',
+    body: JSON.stringify({ accion: 'toggleUsuario', email: email, activo: activar ? 'true' : 'false' })
+  }).then(function(r) { return r.json(); }).catch(function() { return null; });
+  if (res && res.ok) {
+    showToast(activar ? 'Usuario activado' : 'Usuario desactivado');
+    renderUsersGrid();
+    renderUsuariosScreen();
+  }
 }
 
 // ── SW REGISTRATION ──
