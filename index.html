@@ -275,6 +275,26 @@
   /* ── SCROLL HINT ── */
   .scroll-hint { padding-bottom: 8px; }
 
+
+  /* ── PIN KEYBOARD ── */
+  .pin-dot {
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 2px solid var(--border); background: transparent;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .pin-dot.filled { background: var(--topbar); border-color: var(--topbar); }
+  .pin-dot.error { background: var(--red); border-color: var(--red); }
+  .pin-key {
+    aspect-ratio: 1; border-radius: 50%; border: none;
+    background: #F0F4F8; font-size: 24px; font-weight: 500;
+    color: var(--text); cursor: pointer; font-family: 'Sora', sans-serif;
+    transition: background 0.1s, transform 0.08s;
+    display: flex; align-items: center; justify-content: center;
+    width: 100%; padding: 0;
+  }
+  .pin-key:active { background: var(--border); transform: scale(0.93); }
+  .pin-key-del { font-size: 20px; }
+  .pin-key-back { background: transparent; }
   /* ── LOGIN SCREEN ── */
   #screen-login {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -303,18 +323,34 @@
   <img src="icon-512.png" style="width:225px;height:225px;object-fit:contain;margin-bottom:4px;">
   <div style="font-size:34px;font-weight:700;color:#1A3A5C;letter-spacing:-1.5px;margin-bottom:4px">Cristalito</div>
   <div style="font-size:13px;color:#5A6672;margin-bottom:36px">Fábrica Frigorífica Lanza</div>
-  <div style="background:#fff;border-radius:24px;padding:28px 24px;width:100%;max-width:360px;box-shadow:0 8px 32px rgba(26,58,92,0.12)">
-    <div style="font-size:18px;font-weight:700;margin-bottom:18px;color:var(--text)">Ingresar al sistema</div>
-    <div class="form-group">
-      <label class="form-label">Nombre</label>
-      <input class="form-input" type="text" id="login-nombre" placeholder="Tu nombre" autocomplete="off" autocorrect="off" autocapitalize="words">
+  <!-- PASO 1: Seleccionar usuario -->
+  <div id="login-step1" style="background:#fff;border-radius:24px;padding:22px 20px;width:100%;max-width:360px;box-shadow:0 8px 32px rgba(26,58,92,0.10)">
+    <div id="users-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
+  </div>
+
+  <!-- PASO 2: PIN -->
+  <div id="login-step2" style="display:none;background:#fff;border-radius:24px;padding:24px 20px;width:100%;max-width:360px;box-shadow:0 8px 32px rgba(26,58,92,0.10)">
+    <div style="text-align:center;font-size:16px;font-weight:700;color:var(--text)" id="pin-saludo"></div>
+    <div style="text-align:center;font-size:12px;color:var(--text3);margin-top:4px">Ingresá tu PIN</div>
+    <div style="display:flex;justify-content:center;gap:14px;margin:16px 0 20px" id="pin-dots">
+      <div class="pin-dot"></div><div class="pin-dot"></div>
+      <div class="pin-dot"></div><div class="pin-dot"></div>
     </div>
-    <div class="form-group">
-      <label class="form-label">Contraseña</label>
-      <input class="form-input" type="password" id="login-pass" placeholder="••••••••">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:260px;margin:0 auto">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2</button>
+      <button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button>
+      <button class="pin-key" onclick="pinKey('5')">5</button>
+      <button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button>
+      <button class="pin-key" onclick="pinKey('8')">8</button>
+      <button class="pin-key" onclick="pinKey('9')">9</button>
+      <button class="pin-key pin-key-back" onclick="volverNombre()">← volver</button>
+      <button class="pin-key" onclick="pinKey('0')">0</button>
+      <button class="pin-key pin-key-del" onclick="pinDel()">⌫</button>
     </div>
-    <div id="login-error" style="display:none;font-size:12px;color:var(--red);margin-bottom:10px;text-align:center;font-weight:500"></div>
-    <button class="btn btn-dark btn-block" style="margin-top:4px" id="login-btn" onclick="doLogin()">Entrar →</button>
+    <div id="login-error-2" style="font-size:12px;color:var(--red);margin-top:12px;text-align:center;font-weight:500;min-height:18px"></div>
   </div>
 </div>
 
@@ -1084,44 +1120,108 @@ var usuarios = {
 };
 
 // ── LOGIN ──
+// ── PIN LOGIN ──────────────────────────────────────────────────
+var pinValue = '';
+var pinNombre = '';
+
+var avatarColors = ['#1A3A5C','#2A7CC7','#28A745','#FF6B35','#9B59B6','#E74C3C','#16A085','#D35400'];
+
+function renderUsersGrid() {
+  var grid = document.getElementById('users-grid');
+  if (!grid) return;
+  if (!API_URL) {
+    // fallback demo
+    var demos = [{nombre:'Cecilia'},{nombre:'Chiche'},{nombre:'Diego'},{nombre:'Leandro'}];
+    grid.innerHTML = demos.map((u,i) => userCard(u.nombre, avatarColors[i % avatarColors.length])).join('');
+    return;
+  }
+  grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--text3);font-size:13px">Cargando...</div>';
+  apiGet('getUsuarios').then(users => {
+    if (!users || users.length === 0) {
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--text3);font-size:13px">Sin usuarios</div>';
+      return;
+    }
+    grid.innerHTML = users.filter(u => u.Activo === 'true').map((u, i) =>
+      userCard(u.Nombre, avatarColors[i % avatarColors.length])
+    ).join('');
+  });
+}
+
+function userCard(nombre, color) {
+  var initials = nombre.slice(0,2).toUpperCase();
+  return '<button style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 10px;border-radius:14px;border:2px solid transparent;background:#F0F4F8;cursor:pointer;font-family:inherit;transition:all 0.15s;width:100%" onclick="selectUserPin('' + nombre + '')" ontouchstart="this.style.background='#E8F4FF'" ontouchend="this.style.background='#F0F4F8'">' +
+    '<div style="width:52px;height:52px;border-radius:50%;background:' + color + ';display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff">' + initials + '</div>' +
+    '<div style="font-size:14px;font-weight:600;color:var(--text)">' + nombre + '</div>' +
+    '</button>';
+}
+
+function selectUserPin(nombre) {
+  pinNombre = nombre;
+  pinValue = '';
+  updatePinDots();
+  document.getElementById('pin-saludo').textContent = 'Hola, ' + nombre + '!';
+  document.getElementById('login-error-2').textContent = '';
+  document.getElementById('login-step1').style.display = 'none';
+  document.getElementById('login-step2').style.display = 'block';
+}
+
+function volverNombre() {
+  pinValue = '';
+  document.getElementById('login-step2').style.display = 'none';
+  document.getElementById('login-step1').style.display = 'block';
+}
+
+function pinKey(digit) {
+  if (pinValue.length >= 4) return;
+  pinValue += digit;
+  updatePinDots();
+  if (pinValue.length === 4) setTimeout(doLogin, 120);
+}
+
+function pinDel() {
+  pinValue = pinValue.slice(0, -1);
+  updatePinDots();
+}
+
+function updatePinDots() {
+  var dots = document.querySelectorAll('.pin-dot');
+  dots.forEach((d, i) => {
+    d.classList.toggle('filled', i < pinValue.length);
+    d.classList.remove('error');
+  });
+}
+
+function pinError() {
+  var dots = document.querySelectorAll('.pin-dot');
+  dots.forEach(d => { d.classList.remove('filled'); d.classList.add('error'); });
+  setTimeout(() => {
+    dots.forEach(d => d.classList.remove('error'));
+    pinValue = '';
+    updatePinDots();
+  }, 700);
+}
+
 async function doLogin() {
-  var nombre = (document.getElementById('login-nombre').value || '').trim();
-  var pass   = document.getElementById('login-pass').value;
-  var errEl  = document.getElementById('login-error');
-  var btn    = document.getElementById('login-btn');
-
+  var nombre = pinNombre;
+  var pass   = pinValue;
+  var errEl  = document.getElementById('login-error-2');
   errEl.style.display = 'none';
-  if (!nombre) { errEl.textContent = 'Ingresá tu nombre'; errEl.style.display = 'block'; return; }
-  if (!pass)   { errEl.textContent = 'Ingresá tu contraseña'; errEl.style.display = 'block'; return; }
 
-  // Si hay API, validar contra Sheet
   if (API_URL) {
-    btn.textContent = 'Ingresando...';
-    btn.disabled = true;
     var res = await apiGet('loginNombre', { nombre: nombre, password: pass });
-    btn.textContent = 'Entrar →';
-    btn.disabled = false;
     if (!res) {
-      errEl.textContent = 'Usuario o contraseña incorrectos';
+      pinError();
+      errEl.textContent = 'PIN incorrecto';
       errEl.style.display = 'block';
       return;
     }
     currentUser = { nombre: res.nombre, rol: res.rol, id: res.vendedorId, emoji: res.nombre.slice(0,2).toUpperCase() };
   } else {
-    // Fallback local sin Sheet
-    var localUsers = {
-      'admin':   { nombre: 'Admin', rol: 'admin', id: '', emoji: 'AD' },
-      'carlos':  { nombre: 'Carlos', rol: 'vendedor', id: 'v1', emoji: 'CA' },
-      'lucia':   { nombre: 'Lucia', rol: 'vendedor', id: 'v2', emoji: 'LU' },
-      'roberto': { nombre: 'Roberto', rol: 'operario', id: 'v3', emoji: 'RO' },
-    };
-    var key = nombre.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    // Fallback local
+    var localUsers = { 'cecilia': { nombre: 'Cecilia', rol: 'admin', id: '', emoji: 'CE' } };
+    var key = nombre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     var found = localUsers[key];
-    if (!found || pass !== '1234') {
-      errEl.textContent = 'Usuario o contraseña incorrectos';
-      errEl.style.display = 'block';
-      return;
-    }
+    if (!found || pass !== '1234') { pinError(); errEl.textContent = 'PIN incorrecto'; errEl.style.display = 'block'; return; }
     currentUser = found;
   }
 
@@ -1134,7 +1234,7 @@ function showUserMenu() {
   if (!currentUser) return;
   if (confirm('¿Cerrar sesión?')) {
     currentUser = null;
-    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('login-screen').style.display = 'flex'; renderUsersGrid();
   }
 }
 
@@ -1760,6 +1860,9 @@ function registrarHeladera() {
 }
 
 // ── SW REGISTRATION ──
+// Render users grid on load
+window.addEventListener('load', function() { renderUsersGrid(); });
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').catch(()=>{});
