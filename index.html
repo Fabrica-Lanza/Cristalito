@@ -1272,6 +1272,8 @@ function navBack() {
   var strip;
 
   document.addEventListener('DOMContentLoaded', function() {
+    renderUsersGrid();
+    setCarouselIdx(0, false);
     strip = document.getElementById('tab-strip');
     if (!strip) return;
 
