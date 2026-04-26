@@ -303,24 +303,18 @@
   <img src="icon-512.png" style="width:225px;height:225px;object-fit:contain;margin-bottom:4px;">
   <div style="font-size:34px;font-weight:700;color:#1A3A5C;letter-spacing:-1.5px;margin-bottom:4px">Cristalito</div>
   <div style="font-size:13px;color:#5A6672;margin-bottom:36px">Fábrica Frigorífica Lanza</div>
-  <div style="background:#fff;border-radius:24px;padding:28px 24px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,0.25)">
+  <div style="background:#fff;border-radius:24px;padding:28px 24px;width:100%;max-width:360px;box-shadow:0 8px 32px rgba(26,58,92,0.12)">
     <div style="font-size:18px;font-weight:700;margin-bottom:18px;color:var(--text)">Ingresar al sistema</div>
     <div class="form-group">
-      <label class="form-label">Usuario</label>
-      <select class="form-input" id="login-user">
-        <option value="">Seleccionar usuario...</option>
-        <option value="admin">Admin (Dueño)</option>
-        <option value="vendedor1">Carlos — Vendedor</option>
-        <option value="vendedor2">Lucía — Vendedora</option>
-        <option value="operario1">Roberto — Operario</option>
-      </select>
+      <label class="form-label">Nombre</label>
+      <input class="form-input" type="text" id="login-nombre" placeholder="Tu nombre" autocomplete="off" autocorrect="off" autocapitalize="words">
     </div>
     <div class="form-group">
       <label class="form-label">Contraseña</label>
-      <input class="form-input" type="password" id="login-pass" placeholder="••••••••" value="1234">
+      <input class="form-input" type="password" id="login-pass" placeholder="••••••••">
     </div>
-    <button class="btn btn-dark btn-block" style="margin-top:4px" onclick="doLogin()">Entrar →</button>
-    <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:12px">Demo: cualquier usuario, contraseña 1234</div>
+    <div id="login-error" style="display:none;font-size:12px;color:var(--red);margin-bottom:10px;text-align:center;font-weight:500"></div>
+    <button class="btn btn-dark btn-block" style="margin-top:4px" id="login-btn" onclick="doLogin()">Entrar →</button>
   </div>
 </div>
 
@@ -1090,12 +1084,47 @@ var usuarios = {
 };
 
 // ── LOGIN ──
-function doLogin() {
-  var u = document.getElementById('login-user').value;
-  var p = document.getElementById('login-pass').value;
-  if (!u) { showToast('Seleccioná un usuario', '⚠️'); return; }
-  if (p !== '1234') { showToast('Contraseña incorrecta', '❌'); return; }
-  currentUser = usuarios[u];
+async function doLogin() {
+  var nombre = (document.getElementById('login-nombre').value || '').trim();
+  var pass   = document.getElementById('login-pass').value;
+  var errEl  = document.getElementById('login-error');
+  var btn    = document.getElementById('login-btn');
+
+  errEl.style.display = 'none';
+  if (!nombre) { errEl.textContent = 'Ingresá tu nombre'; errEl.style.display = 'block'; return; }
+  if (!pass)   { errEl.textContent = 'Ingresá tu contraseña'; errEl.style.display = 'block'; return; }
+
+  // Si hay API, validar contra Sheet
+  if (API_URL) {
+    btn.textContent = 'Ingresando...';
+    btn.disabled = true;
+    var res = await apiGet('loginNombre', { nombre: nombre, password: pass });
+    btn.textContent = 'Entrar →';
+    btn.disabled = false;
+    if (!res) {
+      errEl.textContent = 'Usuario o contraseña incorrectos';
+      errEl.style.display = 'block';
+      return;
+    }
+    currentUser = { nombre: res.nombre, rol: res.rol, id: res.vendedorId, emoji: res.nombre.slice(0,2).toUpperCase() };
+  } else {
+    // Fallback local sin Sheet
+    var localUsers = {
+      'admin':   { nombre: 'Admin', rol: 'admin', id: '', emoji: 'AD' },
+      'carlos':  { nombre: 'Carlos', rol: 'vendedor', id: 'v1', emoji: 'CA' },
+      'lucia':   { nombre: 'Lucia', rol: 'vendedor', id: 'v2', emoji: 'LU' },
+      'roberto': { nombre: 'Roberto', rol: 'operario', id: 'v3', emoji: 'RO' },
+    };
+    var key = nombre.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    var found = localUsers[key];
+    if (!found || pass !== '1234') {
+      errEl.textContent = 'Usuario o contraseña incorrectos';
+      errEl.style.display = 'block';
+      return;
+    }
+    currentUser = found;
+  }
+
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('userBtn').textContent = currentUser.emoji;
   initApp();
