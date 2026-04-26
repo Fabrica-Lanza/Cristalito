@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#1A3A5C">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Cristalito — Fábrica Frigorífica Lanza</title>
 <link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>Cristalito — Fábrica Frigorífica Lanza</title>
 <style>
+
   :root {
     --bg: #D8E0E8;
     --bg2: #C8D4DE;
@@ -69,14 +69,38 @@
     bottom: var(--nav-h);
     overflow: hidden;
   }
-  .screen {
-    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  /* CAROUSEL — main tabs live side by side */
+  #tab-strip {
+    display: flex;
+    width: 500vw;
+    height: 100%;
+    transition: transform 0.32s cubic-bezier(.4,0,.2,1);
+    will-change: transform;
+  }
+  .tab-panel {
+    width: 100vw;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 16px 14px 8px;
+    flex-shrink: 0;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
+  }
+  /* SUBPAGES — stack on top */
+  .subpage {
+    display: none;
+    position: fixed;
+    top: var(--topbar-h); left: 0; right: 0; bottom: var(--nav-h);
     overflow-y: auto; overflow-x: hidden;
     padding: 16px 14px 8px;
-    display: none;
+    background: var(--bg);
+    z-index: 50;
     -webkit-overflow-scrolling: touch;
   }
-  .screen.active { display: block; }
+  .subpage.active { display: block; }
+  /* keep .screen class for modals/compat */
+  .screen { display: block; }
 
   /* ── BOTTOM NAV ── */
   #bottomnav {
@@ -310,13 +334,12 @@
 
   /* ── TOP SPACER (pull to refresh indicator placeholder) ── */
   .pt-safe { padding-top: 4px; }
+
 </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════════════
-     LOGIN SCREEN (shown when not authenticated)
-════════════════════════════════════════════════════ -->
+<!-- LOGIN -->
 <div id="login-screen" style="position:fixed;inset:0;z-index:999;background:#D8E0E8;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;">
 
   <!-- PASO 1: Seleccionar usuario -->
@@ -336,7 +359,7 @@
     <div style="background:#fff;border-radius:24px;padding:24px 20px;width:100%;box-shadow:0 8px 32px rgba(26,58,92,0.10)">
     <div style="display:none"></div>
     <div style="display:none"></div>
-    <div style="display:flex;justify-content:center;gap:14px;margin:16px 0 20px" id="pin-dots">
+    <div style="display:flex;justify-content:center;gap:14px;margin-bottom:24px" id="pin-dots">
       <div class="pin-dot"></div><div class="pin-dot"></div>
       <div class="pin-dot"></div><div class="pin-dot"></div>
     </div>
@@ -357,24 +380,22 @@
     <div id="login-error-2" style="font-size:12px;color:var(--red);margin-top:12px;text-align:center;font-weight:500;min-height:18px"></div>
     </div>
   </div>
+
 </div>
 
-<!-- ═══════════════════════════════════════════════════
-     TOPBAR
-════════════════════════════════════════════════════ -->
+<!-- TOPBAR -->
 <div id="topbar">
-  <div class="logo"><span>🧊</span> Cristalito</div>
-  <div class="sync-dot ok" id="syncDot" title="Sincronizado"></div>
+  <div class="logo"><img src="icon-512.png" style="height:28px;width:28px;object-fit:contain"> Cristalito</div>
+  <div class="sync-dot ok" id="syncDot"></div>
   <button class="user-btn" id="userBtn" onclick="showUserMenu()">?</button>
 </div>
 
-<!-- ═══════════════════════════════════════════════════
-     SCREENS
-════════════════════════════════════════════════════ -->
+<!-- SCREENS -->
 <div id="screens">
+  <div id="tab-strip">
 
-  <!-- ── DASHBOARD ── -->
-  <div class="screen active pt-safe" id="screen-dashboard">
+    <div class="tab-panel pt-safe" id="screen-dashboard">
+
     <div class="section-title">Buenos días ☀️</div>
 
     <div id="alert-stock-bajo" class="alert alert-yellow" style="display:none">
@@ -436,7 +457,10 @@
   </div>
 
   <!-- ── STOCK ── -->
-  <div class="screen pt-safe" id="screen-stock">
+    </div>
+
+    <div class="tab-panel pt-safe" id="screen-stock">
+
     <div class="section-title">Stock 📦</div>
 
     <div class="metric-grid">
@@ -473,7 +497,10 @@
   </div>
 
   <!-- ── VENTAS ── -->
-  <div class="screen pt-safe" id="screen-ventas">
+    </div>
+
+    <div class="tab-panel pt-safe" id="screen-ventas">
+
     <div class="section-title">Ventas 🧊</div>
 
     <div class="metric-grid">
@@ -509,7 +536,10 @@
   </div>
 
   <!-- ── CLIENTES ── -->
-  <div class="screen pt-safe" id="screen-clientes">
+    </div>
+
+    <div class="tab-panel pt-safe" id="screen-clientes">
+
     <div class="section-title">Clientes 👥</div>
 
     <div style="margin-bottom:12px">
@@ -524,7 +554,10 @@
   </div>
 
   <!-- ── MÁS ── -->
-  <div class="screen pt-safe" id="screen-mas">
+    </div>
+
+    <div class="tab-panel pt-safe" id="screen-mas">
+
     <div class="section-title">Más opciones</div>
 
     <div class="card" style="padding:0 14px">
@@ -568,20 +601,12 @@
   </div>
 
   <!-- ── USUARIOS ── -->
-  <div class="screen pt-safe" id="screen-usuarios">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-      <button onclick="navBack()" style="background:var(--card);border:none;border-radius:10px;padding:8px 12px;font-size:16px;cursor:pointer;box-shadow:var(--shadow)">←</button>
-      <div class="section-title" style="margin:0">Usuarios</div>
     </div>
-    <div class="card" style="padding:0 14px">
-      <div id="usuarios-lista"></div>
-    </div>
-    <button class="fab" onclick="openModal('modal-nuevo-usuario')">+</button>
+
   </div>
 
+  <div class="subpage pt-safe" id="screen-produccion">
 
-  <!-- ── PRODUCCIÓN ── -->
-  <div class="screen pt-safe" id="screen-produccion">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
       <button onclick="navBack()" style="background:var(--card);border:none;border-radius:10px;padding:8px 12px;font-size:16px;cursor:pointer;box-shadow:var(--shadow)">←</button>
       <div class="section-title" style="margin:0">Producción 🏭</div>
@@ -613,7 +638,10 @@
   </div>
 
   <!-- ── VENDEDORES ── -->
-  <div class="screen pt-safe" id="screen-vendedores">
+  </div>
+
+  <div class="subpage pt-safe" id="screen-vendedores">
+
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
       <button onclick="navBack()" style="background:var(--card);border:none;border-radius:10px;padding:8px 12px;font-size:16px;cursor:pointer;box-shadow:var(--shadow)">←</button>
       <div class="section-title" style="margin:0">Vendedores 🧑</div>
@@ -633,7 +661,10 @@
   </div>
 
   <!-- ── REPORTES ── -->
-  <div class="screen pt-safe" id="screen-reportes">
+  </div>
+
+  <div class="subpage pt-safe" id="screen-reportes">
+
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
       <button onclick="navBack()" style="background:var(--card);border:none;border-radius:10px;padding:8px 12px;font-size:16px;cursor:pointer;box-shadow:var(--shadow)">←</button>
       <div class="section-title" style="margin:0">Reportes 📊</div>
@@ -680,7 +711,10 @@
   </div>
 
   <!-- ── HELADERAS ── -->
-  <div class="screen pt-safe" id="screen-heladeras">
+  </div>
+
+  <div class="subpage pt-safe" id="screen-heladeras">
+
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
       <button onclick="navBack()" style="background:var(--card);border:none;border-radius:10px;padding:8px 12px;font-size:16px;cursor:pointer;box-shadow:var(--shadow)">←</button>
       <div class="section-title" style="margin:0">Heladeras ❄️</div>
@@ -692,7 +726,10 @@
   </div>
 
   <!-- ── CONFIG ── -->
-  <div class="screen pt-safe" id="screen-config">
+  </div>
+
+  <div class="subpage pt-safe" id="screen-config">
+
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
       <button onclick="navBack()" style="background:var(--card);border:none;border-radius:10px;padding:8px 12px;font-size:16px;cursor:pointer;box-shadow:var(--shadow)">←</button>
       <div class="section-title" style="margin:0">Configuración ⚙️</div>
@@ -765,11 +802,44 @@
     <span class="nav-icon">⋯</span>
     <span class="nav-label">Más</span>
   </button>
+
+  </div>
+
+  <div class="subpage pt-safe" id="screen-usuarios">
+
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <button onclick="navBack()" style="background:var(--card);border:none;border-radius:10px;padding:8px 12px;font-size:16px;cursor:pointer;box-shadow:var(--shadow)">←</button>
+      <div class="section-title" style="margin:0">Usuarios</div>
+    </div>
+    <div class="card" style="padding:0 14px">
+      <div id="usuarios-lista"></div>
+    </div>
+    <button class="fab" onclick="openModal('modal-nuevo-usuario')">+</button>
+  </div>
+
+
+  </div>
+
 </div>
 
-<!-- ═══════════════════════════════════════════════════
-     MODALES
-════════════════════════════════════════════════════ -->
+<!-- BOTTOM NAV -->
+<div id="bottomnav">
+  <button class="nav-tab active" id="tab-dashboard" onclick="navTo('dashboard')">
+    <span class="nav-icon">🏠</span><span class="nav-label">Inicio</span>
+  </button>
+  <button class="nav-tab" id="tab-stock" onclick="navTo('stock')">
+    <span class="nav-icon">📦</span><span class="nav-label">Stock</span>
+  </button>
+  <button class="nav-tab" id="tab-ventas" onclick="navTo('ventas')">
+    <span class="nav-icon">🧊</span><span class="nav-label">Ventas</span>
+  </button>
+  <button class="nav-tab" id="tab-clientes" onclick="navTo('clientes')">
+    <span class="nav-icon">👥</span><span class="nav-label">Clientes</span>
+  </button>
+  <button class="nav-tab" id="tab-mas" onclick="navTo('mas')">
+    <span class="nav-icon">⋯</span><span class="nav-label">Más</span>
+  </button>
+</div>
 
 <!-- Modal: Nueva Venta -->
 <div class="modal-overlay" id="modal-venta" onclick="overlayClose(event,'modal-venta')">
@@ -1126,10 +1196,159 @@
   ✓ Guardado
 </div>
 
-<!-- ═══════════════════════════════════════════════════
-     JAVASCRIPT
-════════════════════════════════════════════════════ -->
 <script>
+// ── NAVIGATION ───────────────────────────────────────────────────
+var carouselIdx = 0;
+var mainTabs = ['dashboard', 'stock', 'ventas', 'clientes', 'mas'];
+var subPages = ['produccion', 'vendedores', 'reportes', 'heladeras', 'config', 'usuarios'];
+var currentTabIdx = 0;
+var carouselIdx = 0;
+
+function setCarouselIdx(idx, animate) {
+  var strip = document.getElementById('tab-strip');
+  if (!strip) return;
+  strip.style.transition = animate ? 'transform 0.32s cubic-bezier(.4,0,.2,1)' : 'none';
+  strip.style.transform = 'translateX(-' + (idx * 100) + 'vw)';
+  currentTabIdx = idx;
+  carouselIdx = idx;
+}
+
+function navTo(screen) {
+  prevScreen = currentScreen;
+  currentScreen = screen;
+
+  var tabIdx = mainTabs.indexOf(screen);
+  var isTab = tabIdx !== -1;
+
+  // Update bottom nav
+  document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
+  if (isTab) {
+    var tab = document.getElementById('tab-' + screen);
+    if (tab) tab.classList.add('active');
+  } else {
+    var masTab = document.getElementById('tab-mas');
+    if (masTab) masTab.classList.add('active');
+  }
+
+  if (isTab) {
+    // Hide all subpages
+    document.querySelectorAll('.subpage').forEach(function(s) { s.classList.remove('active'); });
+    // Move carousel
+    setCarouselIdx(tabIdx, true);
+    // Refresh data
+    if (screen === 'dashboard') renderDashboard();
+    if (screen === 'stock') renderStock();
+    if (screen === 'ventas') renderVentas('hoy');
+    if (screen === 'clientes') renderClientes('');
+  } else {
+    // Show subpage
+    document.querySelectorAll('.subpage').forEach(function(s) { s.classList.remove('active'); });
+    var sub = document.getElementById('screen-' + screen);
+    if (sub) sub.classList.add('active');
+    if (screen === 'produccion') renderProduccion();
+    if (screen === 'vendedores') renderVendedores();
+    if (screen === 'reportes') renderReportes('semana');
+    if (screen === 'heladeras') renderHeladeras();
+    if (screen === 'config') renderConfig();
+    if (screen === 'usuarios') renderUsuariosScreen();
+  }
+}
+
+function navBack() {
+  // Hide subpage, go back to previous main tab
+  document.querySelectorAll('.subpage').forEach(function(s) { s.classList.remove('active'); });
+  var prev = prevScreen && mainTabs.indexOf(prevScreen) !== -1 ? prevScreen : 'mas';
+  currentScreen = prev;
+  var idx = mainTabs.indexOf(prev);
+  setCarouselIdx(idx, false);
+  document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
+  var tab = document.getElementById('tab-' + prev);
+  if (tab) tab.classList.add('active');
+}
+
+// ── DRAG ─────────────────────────────────────────────────────────
+(function() {
+  var startX, startY, curX, locked, snapping;
+  var strip;
+
+  document.addEventListener('DOMContentLoaded', function() {
+    strip = document.getElementById('tab-strip');
+    if (!strip) return;
+
+    strip.addEventListener('touchstart', function(e) {
+      if (subPages.indexOf(currentScreen) !== -1) return;
+      if (document.querySelector('.modal-overlay.open')) return;
+      if (snapping) return;
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      curX = startX;
+      locked = null;
+      strip.style.transition = 'none';
+    }, { passive: true });
+
+    strip.addEventListener('touchmove', function(e) {
+      if (snapping || subPages.indexOf(currentScreen) !== -1) return;
+      var x = e.touches[0].clientX;
+      var y = e.touches[0].clientY;
+      var dx = x - startX;
+      var dy = y - startY;
+
+      if (!locked) {
+        if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+          locked = Math.abs(dx) > Math.abs(dy) ? 'h' : 'v';
+        }
+        return;
+      }
+      if (locked !== 'h') return;
+      e.preventDefault();
+
+      curX = x;
+      var w = window.innerWidth;
+      var base = -(currentTabIdx * w);
+      var resist = (dx > 0 && currentTabIdx === 0) || (dx < 0 && currentTabIdx === mainTabs.length - 1);
+      strip.style.transform = 'translateX(' + (base + (resist ? dx * 0.15 : dx)) + 'px)';
+    }, { passive: false });
+
+    function onEnd() {
+      if (locked !== 'h') { locked = null; return; }
+      locked = null;
+
+      var dx = curX - startX;
+      var w = window.innerWidth;
+      var threshold = w * 0.28;
+      snapping = true;
+
+      var newIdx = currentTabIdx;
+      if (dx < -threshold && currentTabIdx < mainTabs.length - 1) newIdx = currentTabIdx + 1;
+      else if (dx > threshold && currentTabIdx > 0) newIdx = currentTabIdx - 1;
+
+      setCarouselIdx(newIdx, true);
+
+      setTimeout(function() {
+        snapping = false;
+        if (newIdx !== currentTabIdx) {
+          // currentTabIdx already updated by setCarouselIdx
+          currentScreen = mainTabs[newIdx];
+          document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
+          var tab = document.getElementById('tab-' + currentScreen);
+          if (tab) tab.classList.add('active');
+          if (currentScreen === 'dashboard') renderDashboard();
+          if (currentScreen === 'stock') renderStock();
+          if (currentScreen === 'ventas') renderVentas('hoy');
+          if (currentScreen === 'clientes') renderClientes('');
+        }
+      }, 340);
+    }
+
+    strip.addEventListener('touchend', onEnd, { passive: true });
+    strip.addEventListener('touchcancel', function() {
+      locked = null;
+      snapping = false;
+      setCarouselIdx(currentTabIdx, true);
+    }, { passive: true });
+  });
+})();
+
 // ── DATA STORE ──────────────────────────────────────
 var currentUser = null;
 var currentScreen = 'dashboard';
@@ -1344,31 +1563,8 @@ function populateSelects() {
 }
 
 // ── NAV ──
-function navTo(screen) {
-  var tabs = ['dashboard','stock','ventas','clientes','mas'];
-  prevScreen = currentScreen;
-  currentScreen = screen;
-  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
-  document.getElementById('screen-' + screen).classList.add('active');
-  document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
-  var tab = document.getElementById('tab-' + screen);
-  if (tab) tab.classList.add('active');
-  else { var masTab = document.getElementById('tab-mas'); if (masTab) masTab.classList.add('active'); }
-  if (screen === 'dashboard') renderDashboard();
-  if (screen === 'stock') renderStock();
-  if (screen === 'ventas') renderVentas('hoy');
-  if (screen === 'clientes') renderClientes('');
-  if (screen === 'produccion') renderProduccion();
-  if (screen === 'vendedores') renderVendedores();
-  if (screen === 'reportes') renderReportes('semana');
-  if (screen === 'heladeras') renderHeladeras();
-  if (screen === 'config') renderConfig();
-  if (screen === 'usuarios') renderUsuariosScreen();
-}
 
-function navBack() { navTo(prevScreen || 'mas'); }
 
-// ── MODALS ──
 function openModal(id) {
   document.getElementById(id).classList.add('open');
 }
@@ -2045,154 +2241,24 @@ async function toggleUsuario(email, activar) {
   }
 }
 
-// ── DRAG NAVIGATION ─────────────────────────────────────────────
+// ── SWIPE NAVIGATION ────────────────────────────────────────────
 var mainTabs = ['dashboard', 'stock', 'ventas', 'clientes', 'mas'];
-
-(function() {
-  var THRESHOLD = 0.28;
-  var startX, startY, curX, locked, snapping, ghost;
-
-  function isMainTab() {
-    return mainTabs.indexOf(currentScreen) !== -1;
-  }
-
-  function createGhost(direction) {
-    // Get adjacent screen id
-    var idx = mainTabs.indexOf(currentScreen);
-    var adjIdx = direction < 0 ? idx + 1 : idx - 1;
-    if (adjIdx < 0 || adjIdx >= mainTabs.length) return null;
-    var adjId = 'screen-' + mainTabs[adjIdx];
-    var adjEl = document.getElementById(adjId);
-    if (!adjEl) return null;
-
-    var w = window.innerWidth;
-    var h = window.innerHeight;
-
-    // Create overlay ghost
-    var g = document.createElement('div');
-    g.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:200;pointer-events:none;overflow:hidden;';
-
-    // Current screen clone area
-    var cur = document.createElement('div');
-    cur.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:var(--bg);';
-    cur.id = 'drag-cur';
-
-    // Adjacent screen preview
-    var adj = document.createElement('div');
-    var adjOffset = direction < 0 ? w : -w;
-    adj.style.cssText = 'position:absolute;top:0;left:' + adjOffset + 'px;width:100%;height:100%;background:var(--bg);display:flex;align-items:center;justify-content:center;';
-    adj.id = 'drag-adj';
-
-    // Show adjacent tab name as preview
-    var label = document.createElement('div');
-    label.style.cssText = 'font-size:18px;font-weight:600;color:var(--text2);font-family:Sora,sans-serif;opacity:0.4;';
-    label.textContent = mainTabs[adjIdx].charAt(0).toUpperCase() + mainTabs[adjIdx].slice(1);
-    adj.appendChild(label);
-
-    g.appendChild(cur);
-    g.appendChild(adj);
-    document.body.appendChild(g);
-    return g;
-  }
-
-  function moveGhost(g, dx) {
-    if (!g) return;
-    var cur = g.querySelector('#drag-cur');
-    var adj = g.querySelector('#drag-adj');
-    var w = window.innerWidth;
-    if (cur) cur.style.transform = 'translateX(' + dx + 'px)';
-    if (adj) {
-      var idx = mainTabs.indexOf(currentScreen);
-      var isNext = dx < 0;
-      var base = isNext ? w : -w;
-      adj.style.transform = 'translateX(' + (dx) + 'px)';
-    }
-  }
-
-  function removeGhost(g) {
-    if (g && g.parentNode) g.parentNode.removeChild(g);
-  }
-
-  document.addEventListener('touchstart', function(e) {
-    if (!isMainTab()) return;
-    if (document.querySelector('.modal-overlay.open')) return;
-    if (snapping) return;
-    startX = e.touches[0].clientX;
-    startY = e.touches[0].clientY;
-    curX = startX;
-    locked = null;
-    ghost = null;
-  }, { passive: true });
-
-  document.addEventListener('touchmove', function(e) {
-    if (!isMainTab() || snapping) return;
-    var x = e.touches[0].clientX;
-    var y = e.touches[0].clientY;
-    var dx = x - startX;
-    var dy = y - startY;
-
-    if (!locked) {
-      if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
-        locked = Math.abs(dx) > Math.abs(dy) ? 'h' : 'v';
-        if (locked === 'h') {
-          ghost = createGhost(dx);
-        }
-      }
-      return;
-    }
-    if (locked !== 'h') return;
-    e.preventDefault();
-
-    curX = x;
-    var idx = mainTabs.indexOf(currentScreen);
-    var atEdge = (dx > 0 && idx === 0) || (dx < 0 && idx === mainTabs.length - 1);
-    moveGhost(ghost, atEdge ? dx * 0.15 : dx);
-  }, { passive: false });
-
-  document.addEventListener('touchend', function(e) {
-    if (!isMainTab() || locked !== 'h') {
-      locked = null;
-      removeGhost(ghost);
-      ghost = null;
-      return;
-    }
-
-    var dx = curX - startX;
-    var w = window.innerWidth;
-    var idx = mainTabs.indexOf(currentScreen);
-    var threshold = w * THRESHOLD;
-    snapping = true;
-
-    var targetIdx = idx;
-    if (dx < -threshold && idx < mainTabs.length - 1) targetIdx = idx + 1;
-    else if (dx > threshold && idx > 0) targetIdx = idx - 1;
-
-    // Animate ghost to final position
-    var finalDx = targetIdx !== idx ? (targetIdx > idx ? -w : w) : 0;
-    if (ghost) {
-      ghost.style.transition = 'none';
-      var cur = ghost.querySelector('#drag-cur');
-      var adj = ghost.querySelector('#drag-adj');
-      if (cur) { cur.style.transition = 'transform 0.28s cubic-bezier(.4,0,.2,1)'; cur.style.transform = 'translateX(' + finalDx + 'px)'; }
-      if (adj) { adj.style.transition = 'transform 0.28s cubic-bezier(.4,0,.2,1)'; adj.style.transform = 'translateX(' + finalDx + 'px)'; }
-    }
-
-    setTimeout(function() {
-      removeGhost(ghost);
-      ghost = null;
-      if (targetIdx !== idx) navTo(mainTabs[targetIdx]);
-      locked = null;
-      snapping = false;
-    }, 290);
-  }, { passive: true });
-
-  document.addEventListener('touchcancel', function() {
-    removeGhost(ghost);
-    ghost = null;
-    locked = null;
-    snapping = false;
-  }, { passive: true });
-})();
+var swipeStartX = 0, swipeStartY = 0, swipeT = 0;
+document.addEventListener('touchstart', function(e) {
+  swipeStartX = e.touches[0].clientX;
+  swipeStartY = e.touches[0].clientY;
+  swipeT = Date.now();
+}, { passive: true });
+document.addEventListener('touchend', function(e) {
+  if (mainTabs.indexOf(currentScreen) === -1) return;
+  if (document.querySelector('.modal-overlay.open')) return;
+  var dx = e.changedTouches[0].clientX - swipeStartX;
+  var dy = e.changedTouches[0].clientY - swipeStartY;
+  if (Date.now() - swipeT > 350 || Math.abs(dy) > Math.abs(dx) || Math.abs(dx) < 60) return;
+  var idx = mainTabs.indexOf(currentScreen);
+  if (dx < 0 && idx < mainTabs.length - 1) navTo(mainTabs[idx + 1]);
+  else if (dx > 0 && idx > 0) navTo(mainTabs[idx - 1]);
+}, { passive: true });
 
 // ── SW REGISTRATION ──
 if ('serviceWorker' in navigator) {
@@ -2206,10 +2272,10 @@ setInterval(() => {
   var dot = document.getElementById('syncDot');
   dot.className = 'sync-dot ok';
 }, 3000);
-</script>
-</body>
-</html>
-<!-- BACKEND PATCH — insertar antes de </body> -->
+
+
+
+<!-- BACKEND PATCH — insertar antes de  -->
 <script>
 // ═══════════════════════════════════════════════════════════════
 // API CLIENT — conexión con Google Apps Script
@@ -2409,3 +2475,5 @@ initApp = async function() {
 // ── Sincronización automática cada 60 segundos ──
 setInterval(async () => { if (API_URL && currentUser) await sincronizarDatos(); }, 60000);
 </script>
+</body>
+</html>
