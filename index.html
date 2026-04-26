@@ -2050,6 +2050,152 @@ async function toggleUsuario(email, activar) {
   }
 }
 
+// ── DRAG NAVIGATION ─────────────────────────────────────────────
+var mainTabs = ['dashboard', 'stock', 'ventas', 'clientes', 'mas'];
+var dragStartX = 0;
+var dragStartY = 0;
+var dragCurX = 0;
+var dragLocked = null; // 'h' horizontal, 'v' vertical
+var dragActive = false;
+var screenW = window.innerWidth;
+
+window.addEventListener('resize', function() { screenW = window.innerWidth; });
+
+function getScreensEl() { return document.getElementById('screens'); }
+
+function setScreensTranslate(px) {
+  var el = getScreensEl();
+  if (el) el.style.transform = 'translateX(' + px + 'px)';
+}
+
+function setScreensTransition(on) {
+  var el = getScreensEl();
+  if (el) el.style.transition = on ? 'transform 0.28s cubic-bezier(.4,0,.2,1)' : 'none';
+}
+
+function prepareAdjacentScreens(idx) {
+  // Show prev and next screens positioned correctly for drag
+  mainTabs.forEach(function(tab, i) {
+    var el = document.getElementById('screen-' + tab);
+    if (!el) return;
+    if (i === idx) {
+      el.style.display = 'block';
+      el.style.position = 'absolute';
+      el.style.left = '0';
+      el.style.right = '0';
+    } else if (i === idx - 1) {
+      el.style.display = 'block';
+      el.style.position = 'absolute';
+      el.style.left = (-screenW) + 'px';
+      el.style.right = 'auto';
+      el.style.width = screenW + 'px';
+    } else if (i === idx + 1) {
+      el.style.display = 'block';
+      el.style.position = 'absolute';
+      el.style.left = screenW + 'px';
+      el.style.right = 'auto';
+      el.style.width = screenW + 'px';
+    } else {
+      el.style.display = 'none';
+    }
+  });
+}
+
+function cleanupScreens(idx) {
+  mainTabs.forEach(function(tab, i) {
+    var el = document.getElementById('screen-' + tab);
+    if (!el) return;
+    el.style.position = '';
+    el.style.left = '';
+    el.style.right = '';
+    el.style.width = '';
+    if (i === idx) {
+      el.classList.add('active');
+      el.style.display = 'block';
+    } else {
+      el.classList.remove('active');
+      el.style.display = 'none';
+    }
+  });
+  setScreensTransition(false);
+  setScreensTranslate(0);
+}
+
+var screensEl = document.getElementById('screens');
+
+document.addEventListener('DOMContentLoaded', function() {
+  var screensEl = document.getElementById('screens');
+  if (!screensEl) return;
+
+  screensEl.addEventListener('touchstart', function(e) {
+    if (mainTabs.indexOf(currentScreen) === -1) return;
+    if (document.querySelector('.modal-overlay.open')) return;
+    dragStartX = e.touches[0].clientX;
+    dragStartY = e.touches[0].clientY;
+    dragCurX = dragStartX;
+    dragLocked = null;
+    dragActive = true;
+    var idx = mainTabs.indexOf(currentScreen);
+    prepareAdjacentScreens(idx);
+    setScreensTransition(false);
+  }, { passive: true });
+
+  screensEl.addEventListener('touchmove', function(e) {
+    if (!dragActive) return;
+    var x = e.touches[0].clientX;
+    var y = e.touches[0].clientY;
+    var dx = x - dragStartX;
+    var dy = y - dragStartY;
+
+    if (!dragLocked) {
+      if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+        dragLocked = Math.abs(dx) > Math.abs(dy) ? 'h' : 'v';
+      }
+    }
+
+    if (dragLocked !== 'h') return;
+    e.preventDefault();
+
+    var idx = mainTabs.indexOf(currentScreen);
+    // Resist at edges
+    if ((dx > 0 && idx === 0) || (dx < 0 && idx === mainTabs.length - 1)) {
+      dx = dx * 0.2;
+    }
+    dragCurX = x;
+    setScreensTranslate(dx);
+  }, { passive: false });
+
+  screensEl.addEventListener('touchend', function(e) {
+    if (!dragActive || dragLocked !== 'h') { dragActive = false; dragLocked = null; return; }
+    dragActive = false;
+    var dx = dragCurX - dragStartX;
+    var idx = mainTabs.indexOf(currentScreen);
+    var threshold = screenW * 0.3;
+    setScreensTransition(true);
+
+    if (dx < -threshold && idx < mainTabs.length - 1) {
+      // Snap to next
+      setScreensTranslate(-screenW);
+      setTimeout(function() {
+        navTo(mainTabs[idx + 1]);
+        cleanupScreens(idx + 1);
+      }, 280);
+    } else if (dx > threshold && idx > 0) {
+      // Snap to prev
+      setScreensTranslate(screenW);
+      setTimeout(function() {
+        navTo(mainTabs[idx - 1]);
+        cleanupScreens(idx - 1);
+      }, 280);
+    } else {
+      // Snap back
+      setScreensTranslate(0);
+      setTimeout(function() { cleanupScreens(idx); }, 280);
+    }
+    dragLocked = null;
+  }, { passive: true });
+});
+
 // ── SW REGISTRATION ──
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
