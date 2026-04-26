@@ -69,38 +69,14 @@
     bottom: var(--nav-h);
     overflow: hidden;
   }
-  #carousel {
-    display: flex;
-    width: 500%; /* 5 tabs */
-    height: 100%;
-    will-change: transform;
-    transition: none;
-  }
   .screen {
-    width: 20%; /* 100% / 5 tabs */
-    height: 100%;
-    overflow-y: auto;
-    overflow-x: hidden;
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    overflow-y: auto; overflow-x: hidden;
     padding: 16px 14px 8px;
-    flex-shrink: 0;
+    display: none;
     -webkit-overflow-scrolling: touch;
   }
   .screen.active { display: block; }
-  /* Subpages outside carousel need full width */
-  #screen-produccion, #screen-vendedores, #screen-reportes,
-  #screen-heladeras, #screen-config, #screen-usuarios {
-    width: 100vw !important;
-    min-width: 100vw !important;
-    position: fixed !important;
-    top: var(--topbar-h); left: 0; right: 0; bottom: var(--nav-h);
-    z-index: 50;
-    background: var(--bg);
-    display: none;
-  }
-  #screen-produccion.active, #screen-vendedores.active, #screen-reportes.active,
-  #screen-heladeras.active, #screen-config.active, #screen-usuarios.active {
-    display: block !important;
-  }
 
   /* ── BOTTOM NAV ── */
   #bottomnav {
@@ -395,7 +371,7 @@
 <!-- ═══════════════════════════════════════════════════
      SCREENS
 ════════════════════════════════════════════════════ -->
-<div id="screens"><div id="carousel">
+<div id="screens">
 
   <!-- ── DASHBOARD ── -->
   <div class="screen active pt-safe" id="screen-dashboard">
@@ -603,7 +579,6 @@
     <button class="fab" onclick="openModal('modal-nuevo-usuario')">+</button>
   </div>
 
-</div><!-- /carousel -->
 
   <!-- ── PRODUCCIÓN ── -->
   <div class="screen pt-safe" id="screen-produccion">
@@ -1370,62 +1345,25 @@ function populateSelects() {
 
 // ── NAV ──
 function navTo(screen) {
+  var tabs = ['dashboard','stock','ventas','clientes','mas'];
   prevScreen = currentScreen;
   currentScreen = screen;
-
-  var isMain = mainTabs && mainTabs.indexOf(screen) !== -1;
-
-  // Handle subpages (non-carousel screens)
-  if (!isMain) {
-    // Hide carousel, show subpage
-    var carousel = document.getElementById('carousel');
-    if (carousel) carousel.style.display = 'none';
-    document.querySelectorAll('.screen').forEach(function(s) {
-      var id = s.id.replace('screen-', '');
-      if (mainTabs && mainTabs.indexOf(id) !== -1) return; // skip carousel screens
-      s.classList.remove('active');
-      s.style.display = 'none';
-    });
-    var subEl = document.getElementById('screen-' + screen);
-    if (subEl) { subEl.classList.add('active'); subEl.style.display = 'block'; }
-    // Update nav tab
-    document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
-    var masTab = document.getElementById('tab-mas');
-    if (masTab) masTab.classList.add('active');
-    // Refresh
-    if (screen === 'produccion') renderProduccion();
-    if (screen === 'vendedores') renderVendedores();
-    if (screen === 'reportes') renderReportes('semana');
-    if (screen === 'heladeras') renderHeladeras();
-    if (screen === 'config') renderConfig();
-    if (screen === 'usuarios') renderUsuariosScreen();
-    return;
-  }
-
-  // Main tab — show carousel, hide subpages
-  var carousel = document.getElementById('carousel');
-  if (carousel) carousel.style.display = 'flex';
-  document.querySelectorAll('.screen').forEach(function(s) {
-    var id = s.id.replace('screen-', '');
-    if (mainTabs.indexOf(id) !== -1) return;
-    s.classList.remove('active');
-    s.style.display = 'none';
-  });
-
-  // Update nav
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById('screen-' + screen).classList.add('active');
   document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
   var tab = document.getElementById('tab-' + screen);
   if (tab) tab.classList.add('active');
-
-  // Refresh data
+  else { var masTab = document.getElementById('tab-mas'); if (masTab) masTab.classList.add('active'); }
   if (screen === 'dashboard') renderDashboard();
   if (screen === 'stock') renderStock();
   if (screen === 'ventas') renderVentas('hoy');
   if (screen === 'clientes') renderClientes('');
-
-  // Move carousel
-  var idx = mainTabs.indexOf(screen);
-  if (typeof carouselGoTo === 'function') carouselGoTo(idx, true);
+  if (screen === 'produccion') renderProduccion();
+  if (screen === 'vendedores') renderVendedores();
+  if (screen === 'reportes') renderReportes('semana');
+  if (screen === 'heladeras') renderHeladeras();
+  if (screen === 'config') renderConfig();
+  if (screen === 'usuarios') renderUsuariosScreen();
 }
 
 function navBack() { navTo(prevScreen || 'mas'); }
@@ -2107,138 +2045,154 @@ async function toggleUsuario(email, activar) {
   }
 }
 
-// ── CAROUSEL DRAG NAVIGATION ────────────────────────────────────
+// ── DRAG NAVIGATION ─────────────────────────────────────────────
 var mainTabs = ['dashboard', 'stock', 'ventas', 'clientes', 'mas'];
-var carouselIdx = 0; // current tab index
-var drag = { active: false, locked: null, startX: 0, startY: 0, curX: 0, snapping: false };
 
-function carouselSetTranslate(px, animate) {
-  var el = document.getElementById('carousel');
-  if (!el) return;
-  el.style.transition = animate ? 'transform 0.3s cubic-bezier(.4,0,.2,1)' : 'none';
-  el.style.transform = 'translateX(' + px + 'px)';
-}
+(function() {
+  var THRESHOLD = 0.28;
+  var startX, startY, curX, locked, snapping, ghost;
 
-function carouselGoTo(idx, animate) {
-  var w = window.innerWidth;
-  carouselSetTranslate(-idx * w, animate);
-  carouselIdx = idx;
-}
-
-// Override navTo for main tabs to use carousel
-var _navTo = navTo;
-navTo = function(screen) {
-  var idx = mainTabs.indexOf(screen);
-  if (idx !== -1) {
-    // Update tab highlight and currentScreen
-    currentScreen = screen;
-    document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
-    var tab = document.getElementById('tab-' + screen);
-    if (tab) tab.classList.add('active');
-    // Show/hide subpages correctly
-    document.querySelectorAll('.screen').forEach(function(s) {
-      if (mainTabs.indexOf(s.id.replace('screen-','')) !== -1) {
-        // main tabs always visible via carousel
-      }
-    });
-    // Refresh data
-    if (screen === 'dashboard') renderDashboard();
-    if (screen === 'stock') renderStock();
-    if (screen === 'ventas') renderVentas('hoy');
-    if (screen === 'clientes') renderClientes('');
-    carouselGoTo(idx, true);
-  } else {
-    _navTo(screen);
+  function isMainTab() {
+    return mainTabs.indexOf(currentScreen) !== -1;
   }
-};
 
-document.addEventListener('DOMContentLoaded', function() {
-  // Init carousel position
-  carouselGoTo(0, false);
+  function createGhost(direction) {
+    // Get adjacent screen id
+    var idx = mainTabs.indexOf(currentScreen);
+    var adjIdx = direction < 0 ? idx + 1 : idx - 1;
+    if (adjIdx < 0 || adjIdx >= mainTabs.length) return null;
+    var adjId = 'screen-' + mainTabs[adjIdx];
+    var adjEl = document.getElementById(adjId);
+    if (!adjEl) return null;
 
-  var carousel = document.getElementById('carousel');
-  if (!carousel) return;
+    var w = window.innerWidth;
+    var h = window.innerHeight;
 
-  carousel.addEventListener('touchstart', function(e) {
+    // Create overlay ghost
+    var g = document.createElement('div');
+    g.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:200;pointer-events:none;overflow:hidden;';
+
+    // Current screen clone area
+    var cur = document.createElement('div');
+    cur.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:var(--bg);';
+    cur.id = 'drag-cur';
+
+    // Adjacent screen preview
+    var adj = document.createElement('div');
+    var adjOffset = direction < 0 ? w : -w;
+    adj.style.cssText = 'position:absolute;top:0;left:' + adjOffset + 'px;width:100%;height:100%;background:var(--bg);display:flex;align-items:center;justify-content:center;';
+    adj.id = 'drag-adj';
+
+    // Show adjacent tab name as preview
+    var label = document.createElement('div');
+    label.style.cssText = 'font-size:18px;font-weight:600;color:var(--text2);font-family:Sora,sans-serif;opacity:0.4;';
+    label.textContent = mainTabs[adjIdx].charAt(0).toUpperCase() + mainTabs[adjIdx].slice(1);
+    adj.appendChild(label);
+
+    g.appendChild(cur);
+    g.appendChild(adj);
+    document.body.appendChild(g);
+    return g;
+  }
+
+  function moveGhost(g, dx) {
+    if (!g) return;
+    var cur = g.querySelector('#drag-cur');
+    var adj = g.querySelector('#drag-adj');
+    var w = window.innerWidth;
+    if (cur) cur.style.transform = 'translateX(' + dx + 'px)';
+    if (adj) {
+      var idx = mainTabs.indexOf(currentScreen);
+      var isNext = dx < 0;
+      var base = isNext ? w : -w;
+      adj.style.transform = 'translateX(' + (dx) + 'px)';
+    }
+  }
+
+  function removeGhost(g) {
+    if (g && g.parentNode) g.parentNode.removeChild(g);
+  }
+
+  document.addEventListener('touchstart', function(e) {
+    if (!isMainTab()) return;
     if (document.querySelector('.modal-overlay.open')) return;
-    if (drag.snapping) return;
-    drag.active = true;
-    drag.locked = null;
-    drag.startX = e.touches[0].clientX;
-    drag.startY = e.touches[0].clientY;
-    drag.curX = drag.startX;
-    carouselSetTranslate(-carouselIdx * window.innerWidth, false);
+    if (snapping) return;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    curX = startX;
+    locked = null;
+    ghost = null;
   }, { passive: true });
 
-  carousel.addEventListener('touchmove', function(e) {
-    if (!drag.active || drag.snapping) return;
+  document.addEventListener('touchmove', function(e) {
+    if (!isMainTab() || snapping) return;
     var x = e.touches[0].clientX;
     var y = e.touches[0].clientY;
-    var dx = x - drag.startX;
-    var dy = y - drag.startY;
+    var dx = x - startX;
+    var dy = y - startY;
 
-    if (!drag.locked) {
+    if (!locked) {
       if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
-        drag.locked = Math.abs(dx) > Math.abs(dy) ? 'h' : 'v';
+        locked = Math.abs(dx) > Math.abs(dy) ? 'h' : 'v';
+        if (locked === 'h') {
+          ghost = createGhost(dx);
+        }
       }
       return;
     }
-    if (drag.locked !== 'h') return;
+    if (locked !== 'h') return;
     e.preventDefault();
 
-    drag.curX = x;
-    var w = window.innerWidth;
-    var base = -carouselIdx * w;
-    var resistedDx = dx;
-    if ((dx > 0 && carouselIdx === 0) || (dx < 0 && carouselIdx === mainTabs.length - 1)) {
-      resistedDx = dx * 0.15;
-    }
-    carouselSetTranslate(base + resistedDx, false);
+    curX = x;
+    var idx = mainTabs.indexOf(currentScreen);
+    var atEdge = (dx > 0 && idx === 0) || (dx < 0 && idx === mainTabs.length - 1);
+    moveGhost(ghost, atEdge ? dx * 0.15 : dx);
   }, { passive: false });
 
-  function onEnd() {
-    if (!drag.active) return;
-    drag.active = false;
-    if (drag.locked !== 'h') { drag.locked = null; return; }
-    drag.locked = null;
+  document.addEventListener('touchend', function(e) {
+    if (!isMainTab() || locked !== 'h') {
+      locked = null;
+      removeGhost(ghost);
+      ghost = null;
+      return;
+    }
 
-    var dx = drag.curX - drag.startX;
+    var dx = curX - startX;
     var w = window.innerWidth;
-    var threshold = w * 0.28;
-    drag.snapping = true;
+    var idx = mainTabs.indexOf(currentScreen);
+    var threshold = w * THRESHOLD;
+    snapping = true;
 
-    var newIdx = carouselIdx;
-    if (dx < -threshold && carouselIdx < mainTabs.length - 1) newIdx = carouselIdx + 1;
-    else if (dx > threshold && carouselIdx > 0) newIdx = carouselIdx - 1;
+    var targetIdx = idx;
+    if (dx < -threshold && idx < mainTabs.length - 1) targetIdx = idx + 1;
+    else if (dx > threshold && idx > 0) targetIdx = idx - 1;
 
-    carouselGoTo(newIdx, true);
+    // Animate ghost to final position
+    var finalDx = targetIdx !== idx ? (targetIdx > idx ? -w : w) : 0;
+    if (ghost) {
+      ghost.style.transition = 'none';
+      var cur = ghost.querySelector('#drag-cur');
+      var adj = ghost.querySelector('#drag-adj');
+      if (cur) { cur.style.transition = 'transform 0.28s cubic-bezier(.4,0,.2,1)'; cur.style.transform = 'translateX(' + finalDx + 'px)'; }
+      if (adj) { adj.style.transition = 'transform 0.28s cubic-bezier(.4,0,.2,1)'; adj.style.transform = 'translateX(' + finalDx + 'px)'; }
+    }
+
     setTimeout(function() {
-      drag.snapping = false;
-      if (newIdx !== carouselIdx - (newIdx - carouselIdx)) {
-        // update currentScreen and nav
-        currentScreen = mainTabs[newIdx];
-        document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
-        var tab = document.getElementById('tab-' + currentScreen);
-        if (tab) tab.classList.add('active');
-        if (currentScreen === 'dashboard') renderDashboard();
-        if (currentScreen === 'stock') renderStock();
-        if (currentScreen === 'ventas') renderVentas('hoy');
-        if (currentScreen === 'clientes') renderClientes('');
-      }
-      carouselIdx = newIdx;
-      currentScreen = mainTabs[newIdx];
-    }, 310);
-  }
-
-  carousel.addEventListener('touchend', onEnd, { passive: true });
-  carousel.addEventListener('touchcancel', function() {
-    if (!drag.active) return;
-    drag.active = false;
-    drag.locked = null;
-    drag.snapping = false;
-    carouselGoTo(carouselIdx, true);
+      removeGhost(ghost);
+      ghost = null;
+      if (targetIdx !== idx) navTo(mainTabs[targetIdx]);
+      locked = null;
+      snapping = false;
+    }, 290);
   }, { passive: true });
-});
+
+  document.addEventListener('touchcancel', function() {
+    removeGhost(ghost);
+    ghost = null;
+    locked = null;
+    snapping = false;
+  }, { passive: true });
+})();
 
 // ── SW REGISTRATION ──
 if ('serviceWorker' in navigator) {
