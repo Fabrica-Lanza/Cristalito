@@ -1860,9 +1860,6 @@ function registrarHeladera() {
 }
 
 // ── SW REGISTRATION ──
-// Render users grid on load
-window.addEventListener('load', function() { renderUsersGrid(); });
-
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').catch(()=>{});
@@ -1884,6 +1881,9 @@ setInterval(() => {
 // ═══════════════════════════════════════════════════════════════
 
 var API_URL = localStorage.getItem('appsscript_url') || '';
+
+// Render login grid once DOM is ready
+document.addEventListener('DOMContentLoaded', function() { renderUsersGrid(); });
 
 // ── Llamada GET ──
 async function apiGet(accion, params) {
