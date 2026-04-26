@@ -1289,7 +1289,7 @@ async function doLogin() {
   }
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('userBtn').textContent = currentUser.emoji;
-  if (currentUser.rol === 'admin') { var el = document.getElementById('item-usuarios'); if (el) el.style.display = 'flex'; }
+  if (currentUser.rol && currentUser.rol.toLowerCase() === 'admin') { var el = document.getElementById('item-usuarios'); if (el) el.style.display = 'flex'; }
   initApp();
 }
 
@@ -1943,24 +1943,48 @@ function renderUsuariosScreen() {
         var div = document.createElement('div');
         div.className = 'list-item';
         div.style.opacity = activo ? '1' : '0.45';
-        div.innerHTML =
-          '<div class="list-avatar" style="background:var(--ice);font-size:14px;font-weight:700;color:var(--accent)">' + (u.Nombre||'?').slice(0,2).toUpperCase() + '</div>' +
-          '<div class="list-info">' +
-            '<div class="list-name">' + (u.Nombre||'') + '</div>' +
-            '<div class="list-sub">' + (u.Rol||'') + (activo ? '' : ' · Inactivo') + '</div>' +
-          '</div>' +
-          '<div style="display:flex;gap:8px;align-items:center">' +
-            '<button style="background:var(--ice);border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;color:var(--accent);cursor:pointer" onclick="editarUsuario(' + JSON.stringify(u) + ')">Editar</button>' +
-            '<button style="background:' + (activo ? '#FDECEE' : '#E8F8EE') + ';border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;color:' + (activo ? 'var(--red)' : 'var(--green)') + ';cursor:pointer" onclick="toggleUsuario('' + u.Email + '',' + !activo + ')">' + (activo ? 'Desactivar' : 'Activar') + '</button>' +
-          '</div>';
+
+        var av = document.createElement('div');
+        av.className = 'list-avatar';
+        av.style.cssText = 'background:var(--ice);font-size:14px;font-weight:700;color:var(--accent)';
+        av.textContent = (u.Nombre||'?').slice(0,2).toUpperCase();
+
+        var info = document.createElement('div');
+        info.className = 'list-info';
+        var nm = document.createElement('div');
+        nm.className = 'list-name';
+        nm.textContent = u.Nombre || '';
+        var sb = document.createElement('div');
+        sb.className = 'list-sub';
+        sb.textContent = (u.Rol||'') + (activo ? '' : ' · Inactivo');
+        info.appendChild(nm);
+        info.appendChild(sb);
+
+        var btns = document.createElement('div');
+        btns.style.cssText = 'display:flex;gap:8px;align-items:center;flex-shrink:0';
+
+        var btnEdit = document.createElement('button');
+        btnEdit.style.cssText = 'background:var(--ice);border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;color:var(--accent);cursor:pointer;font-family:inherit';
+        btnEdit.textContent = 'Editar';
+        btnEdit.addEventListener('click', (function(uu) { return function() { editarUsuario(uu); }; })(u));
+
+        var btnToggle = document.createElement('button');
+        btnToggle.style.cssText = 'border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;background:' + (activo ? '#FDECEE' : '#E8F8EE') + ';color:' + (activo ? 'var(--red)' : 'var(--green)');
+        btnToggle.textContent = activo ? 'Desactivar' : 'Activar';
+        btnToggle.addEventListener('click', (function(id, act) { return function() { toggleUsuario(id, !act); }; })(u.Email || u.Nombre, activo));
+
+        btns.appendChild(btnEdit);
+        btns.appendChild(btnToggle);
+        div.appendChild(av);
+        div.appendChild(info);
+        div.appendChild(btns);
         lista.appendChild(div);
       });
     })
     .catch(function() {
-      lista.innerHTML = '<div class="empty"><div class="empty-text">Error al cargar usuarios</div></div>';
+      lista.innerHTML = '<div class="empty"><div class="empty-text">Error al cargar</div></div>';
     });
 }
-
 function editarUsuario(u) {
   document.getElementById('modal-usuario-titulo').textContent = 'Editar Usuario';
   document.getElementById('u-nombre').value = u.Nombre || '';
