@@ -1297,7 +1297,14 @@ function showUserMenu() {
   if (!currentUser) return;
   if (confirm('¿Cerrar sesión?')) {
     currentUser = null;
-    document.getElementById('login-screen').style.display = 'flex'; renderUsersGrid();
+    pinValue = '';
+    pinNombre = '';
+    updatePinDots();
+    document.getElementById('login-error-2').textContent = '';
+    document.getElementById('login-step2').style.display = 'none';
+    document.getElementById('login-step1').style.display = 'flex';
+    document.getElementById('login-screen').style.display = 'flex';
+    renderUsersGrid();
   }
 }
 
