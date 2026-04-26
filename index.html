@@ -320,18 +320,24 @@
      LOGIN SCREEN (shown when not authenticated)
 ════════════════════════════════════════════════════ -->
 <div id="login-screen" style="position:fixed;inset:0;z-index:999;background:#D8E0E8;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;">
-  <img src="icon-512.png" style="width:225px;height:225px;object-fit:contain;margin-bottom:4px;">
-  <div style="font-size:34px;font-weight:700;color:#1A3A5C;letter-spacing:-1.5px;margin-bottom:4px">Cristalito</div>
-  <div style="font-size:13px;color:#5A6672;margin-bottom:36px">Fábrica Frigorífica Lanza</div>
+
   <!-- PASO 1: Seleccionar usuario -->
-  <div id="login-step1" style="background:#fff;border-radius:24px;padding:22px 20px;width:100%;max-width:360px;box-shadow:0 8px 32px rgba(26,58,92,0.10)">
-    <div id="users-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
+  <div id="login-step1" style="display:flex;flex-direction:column;align-items:center;width:100%;max-width:360px">
+    <img src="icon-512.png" style="width:225px;height:225px;object-fit:contain;margin-bottom:4px;">
+    <div style="font-size:34px;font-weight:700;color:#1A3A5C;letter-spacing:-1.5px;margin-bottom:4px">Cristalito</div>
+    <div style="font-size:13px;color:#5A6672;margin-bottom:24px">Fábrica Frigorífica Lanza</div>
+    <div style="background:#fff;border-radius:24px;padding:22px 20px;width:100%;box-shadow:0 8px 32px rgba(26,58,92,0.10)">
+      <div id="users-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
+    </div>
   </div>
 
   <!-- PASO 2: PIN -->
-  <div id="login-step2" style="display:none;background:#fff;border-radius:24px;padding:24px 20px;width:100%;max-width:360px;box-shadow:0 8px 32px rgba(26,58,92,0.10)">
-    <div style="text-align:center;font-size:16px;font-weight:700;color:var(--text)" id="pin-saludo"></div>
-    <div style="text-align:center;font-size:12px;color:var(--text3);margin-top:4px">Ingresá tu PIN</div>
+  <div id="login-step2" style="display:none;flex-direction:column;align-items:center;width:100%;max-width:360px">
+    <div style="font-size:34px;font-weight:700;color:#1A3A5C;letter-spacing:-1.5px;margin-bottom:4px" id="pin-saludo"></div>
+    <div style="font-size:13px;color:#5A6672;margin-bottom:24px">Ingresá tu PIN</div>
+    <div style="background:#fff;border-radius:24px;padding:24px 20px;width:100%;box-shadow:0 8px 32px rgba(26,58,92,0.10)">
+    <div style="display:none"></div>
+    <div style="display:none"></div>
     <div style="display:flex;justify-content:center;gap:14px;margin:16px 0 20px" id="pin-dots">
       <div class="pin-dot"></div><div class="pin-dot"></div>
       <div class="pin-dot"></div><div class="pin-dot"></div>
@@ -346,11 +352,12 @@
       <button class="pin-key" onclick="pinKey('7')">7</button>
       <button class="pin-key" onclick="pinKey('8')">8</button>
       <button class="pin-key" onclick="pinKey('9')">9</button>
-      <button class="pin-key pin-key-back" onclick="volverNombre()">← volver</button>
+      <button class="pin-key pin-key-back" onclick="volverNombre()">←</button>
       <button class="pin-key" onclick="pinKey('0')">0</button>
       <button class="pin-key pin-key-del" onclick="pinDel()">⌫</button>
     </div>
     <div id="login-error-2" style="font-size:12px;color:var(--red);margin-top:12px;text-align:center;font-weight:500;min-height:18px"></div>
+    </div>
   </div>
 </div>
 
@@ -1171,13 +1178,13 @@ function selectUserPin(nombre) {
   document.getElementById('pin-saludo').textContent = 'Hola, ' + nombre + '!';
   document.getElementById('login-error-2').textContent = '';
   document.getElementById('login-step1').style.display = 'none';
-  document.getElementById('login-step2').style.display = 'block';
+  document.getElementById('login-step2').style.display = 'flex';
 }
 
 function volverNombre() {
   pinValue = '';
   document.getElementById('login-step2').style.display = 'none';
-  document.getElementById('login-step1').style.display = 'block';
+  document.getElementById('login-step1').style.display = 'flex';
 }
 
 function pinKey(digit) {
