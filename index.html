@@ -1155,7 +1155,7 @@ function renderUsersGrid() {
 
 function userCard(nombre, color) {
   var initials = nombre.slice(0,2).toUpperCase();
-  return '<button style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 10px;border-radius:14px;border:2px solid transparent;background:#F0F4F8;cursor:pointer;font-family:inherit;transition:all 0.15s;width:100%" onclick="selectUserPin('' + nombre + '')" ontouchstart="this.style.background='#E8F4FF'" ontouchend="this.style.background='#F0F4F8'">' +
+  return '<button style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 10px;border-radius:14px;border:2px solid transparent;background:#F0F4F8;cursor:pointer;font-family:inherit;transition:all 0.15s;width:100%" onclick="selectUserPin(\'' + nombre + '\')">' +
     '<div style="width:52px;height:52px;border-radius:50%;background:' + color + ';display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff">' + initials + '</div>' +
     '<div style="font-size:14px;font-weight:600;color:var(--text)">' + nombre + '</div>' +
     '</button>';
