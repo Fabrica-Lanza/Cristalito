@@ -2051,168 +2051,128 @@ async function toggleUsuario(email, activar) {
 }
 
 // ── DRAG NAVIGATION ─────────────────────────────────────────────
+// Only works on the 4 main content tabs (not Más which has submenus)
 var mainTabs = ['dashboard', 'stock', 'ventas', 'clientes', 'mas'];
-var dragStartX = 0;
-var dragStartY = 0;
-var dragCurX = 0;
-var dragLocked = null;
-var dragActive = false;
-var dragSnapping = false;
-var screenW = window.innerWidth;
+var dragTabs = ['dashboard', 'stock', 'ventas', 'clientes'];
+var dragState = { active: false, locked: null, startX: 0, startY: 0, curX: 0, snapping: false, prepared: false };
 
-window.addEventListener('resize', function() { screenW = window.innerWidth; });
-
-function setScreensTranslate(px) {
+function dragTranslate(px, animate) {
   var el = document.getElementById('screens');
-  if (el) el.style.transform = 'translateX(' + px + 'px)';
+  if (!el) return;
+  el.style.transition = animate ? 'transform 0.28s cubic-bezier(.4,0,.2,1)' : 'none';
+  el.style.transform = 'translateX(' + px + 'px)';
 }
 
-function setScreensTransition(on) {
-  var el = document.getElementById('screens');
-  if (el) el.style.transition = on ? 'transform 0.28s cubic-bezier(.4,0,.2,1)' : 'none';
-}
-
-function prepareAdjacentScreens(idx) {
+function dragPrepare(idx) {
+  var w = window.innerWidth;
   mainTabs.forEach(function(tab, i) {
     var el = document.getElementById('screen-' + tab);
     if (!el) return;
     if (i === idx) {
-      el.style.display = 'block';
-      el.style.position = 'absolute';
-      el.style.top = '0'; el.style.bottom = '0';
-      el.style.left = '0'; el.style.right = '0';
-      el.style.width = screenW + 'px';
-    } else if (i === idx - 1) {
-      el.style.display = 'block';
-      el.style.position = 'absolute';
-      el.style.top = '0'; el.style.bottom = '0';
-      el.style.left = (-screenW) + 'px';
-      el.style.right = 'auto';
-      el.style.width = screenW + 'px';
-    } else if (i === idx + 1) {
-      el.style.display = 'block';
-      el.style.position = 'absolute';
-      el.style.top = '0'; el.style.bottom = '0';
-      el.style.left = screenW + 'px';
-      el.style.right = 'auto';
-      el.style.width = screenW + 'px';
+      el.style.cssText = 'display:block;position:absolute;top:0;bottom:0;left:0;width:' + w + 'px;overflow-y:auto';
+    } else if (i === idx - 1 || i === idx + 1) {
+      var offset = (i < idx ? -w : w);
+      el.style.cssText = 'display:block;position:absolute;top:0;bottom:0;left:' + offset + 'px;width:' + w + 'px;overflow-y:auto';
     } else {
       el.style.display = 'none';
     }
   });
 }
 
-function cleanupScreens(idx) {
+function dragCleanup(idx) {
   mainTabs.forEach(function(tab, i) {
     var el = document.getElementById('screen-' + tab);
     if (!el) return;
-    el.style.position = '';
-    el.style.top = ''; el.style.bottom = '';
-    el.style.left = ''; el.style.right = '';
-    el.style.width = '';
-    if (i === idx) {
-      el.classList.add('active');
-      el.style.display = 'block';
-    } else {
-      el.classList.remove('active');
-      el.style.display = 'none';
-    }
+    el.removeAttribute('style');
+    if (i === idx) { el.classList.add('active'); el.style.display = 'block'; }
+    else { el.classList.remove('active'); }
   });
-  setScreensTransition(false);
-  setScreensTranslate(0);
-  dragSnapping = false;
+  dragTranslate(0, false);
+  dragState.snapping = false;
+  dragState.prepared = false;
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-  var screensEl = document.getElementById('screens');
-  if (!screensEl) return;
+  var el = document.getElementById('screens');
+  if (!el) return;
 
-  screensEl.addEventListener('touchstart', function(e) {
-    // Only on main tabs, not subpages, not while snapping
-    if (mainTabs.indexOf(currentScreen) === -1) return;
+  el.addEventListener('touchstart', function(e) {
+    if (dragTabs.indexOf(currentScreen) === -1) return;
     if (document.querySelector('.modal-overlay.open')) return;
-    if (dragSnapping) return;
-    dragStartX = e.touches[0].clientX;
-    dragStartY = e.touches[0].clientY;
-    dragCurX = dragStartX;
-    dragLocked = null;
-    dragActive = true;
+    if (dragState.snapping) return;
+    dragState.active = true;
+    dragState.locked = null;
+    dragState.prepared = false;
+    dragState.startX = e.touches[0].clientX;
+    dragState.startY = e.touches[0].clientY;
+    dragState.curX = dragState.startX;
   }, { passive: true });
 
-  screensEl.addEventListener('touchmove', function(e) {
-    if (!dragActive || dragSnapping) return;
+  el.addEventListener('touchmove', function(e) {
+    if (!dragState.active || dragState.snapping) return;
     var x = e.touches[0].clientX;
     var y = e.touches[0].clientY;
-    var dx = x - dragStartX;
-    var dy = y - dragStartY;
+    var dx = x - dragState.startX;
+    var dy = y - dragState.startY;
 
-    if (!dragLocked) {
-      if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {
-        dragLocked = Math.abs(dx) > Math.abs(dy) ? 'h' : 'v';
+    if (!dragState.locked) {
+      if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+        dragState.locked = Math.abs(dx) > Math.abs(dy) ? 'h' : 'v';
       }
       return;
     }
-
-    if (dragLocked !== 'h') return;
+    if (dragState.locked !== 'h') return;
     e.preventDefault();
 
-    // Prepare adjacent on first horizontal move
-    if (!screensEl._dragPrepared) {
-      screensEl._dragPrepared = true;
-      prepareAdjacentScreens(mainTabs.indexOf(currentScreen));
-      setScreensTransition(false);
+    if (!dragState.prepared) {
+      dragState.prepared = true;
+      dragPrepare(mainTabs.indexOf(currentScreen));
+      dragTranslate(0, false);
     }
 
     var idx = mainTabs.indexOf(currentScreen);
-    var resistedDx = dx;
-    if ((dx > 0 && idx === 0) || (dx < 0 && idx === mainTabs.length - 1)) {
-      resistedDx = dx * 0.15;
-    }
-    dragCurX = x;
-    setScreensTranslate(resistedDx);
+    var w = window.innerWidth;
+    var resist = (dx > 0 && idx === 0) || (dx < 0 && idx === dragTabs.length - 1);
+    dragState.curX = x;
+    dragTranslate(resist ? dx * 0.15 : dx, false);
   }, { passive: false });
 
-  screensEl.addEventListener('touchend', function(e) {
-    if (!dragActive) return;
-    dragActive = false;
-    screensEl._dragPrepared = false;
-
-    if (dragLocked !== 'h') { dragLocked = null; return; }
-    dragLocked = null;
-
-    var dx = dragCurX - dragStartX;
-    var idx = mainTabs.indexOf(currentScreen);
-    var threshold = screenW * 0.28;
-    dragSnapping = true;
-    setScreensTransition(true);
-
-    if (dx < -threshold && idx < mainTabs.length - 1) {
-      setScreensTranslate(-screenW);
-      setTimeout(function() {
-        navTo(mainTabs[idx + 1]);
-        cleanupScreens(idx + 1);
-      }, 290);
-    } else if (dx > threshold && idx > 0) {
-      setScreensTranslate(screenW);
-      setTimeout(function() {
-        navTo(mainTabs[idx - 1]);
-        cleanupScreens(idx - 1);
-      }, 290);
-    } else {
-      setScreensTranslate(0);
-      setTimeout(function() { cleanupScreens(idx); }, 290);
+  function onEnd() {
+    if (!dragState.active) return;
+    dragState.active = false;
+    if (dragState.locked !== 'h' || !dragState.prepared) {
+      dragState.locked = null;
+      return;
     }
-  }, { passive: true });
-
-  screensEl.addEventListener('touchcancel', function() {
-    if (!dragActive) return;
-    dragActive = false;
-    screensEl._dragPrepared = false;
-    dragLocked = null;
+    dragState.locked = null;
+    var dx = dragState.curX - dragState.startX;
     var idx = mainTabs.indexOf(currentScreen);
-    setScreensTransition(true);
-    setScreensTranslate(0);
-    setTimeout(function() { cleanupScreens(idx); }, 290);
+    var w = window.innerWidth;
+    var threshold = w * 0.28;
+    dragState.snapping = true;
+
+    if (dx < -threshold && idx < dragTabs.length - 1) {
+      dragTranslate(-w, true);
+      setTimeout(function() { navTo(mainTabs[idx + 1]); dragCleanup(idx + 1); }, 290);
+    } else if (dx > threshold && idx > 0) {
+      dragTranslate(w, true);
+      setTimeout(function() { navTo(mainTabs[idx - 1]); dragCleanup(idx - 1); }, 290);
+    } else {
+      dragTranslate(0, true);
+      setTimeout(function() { dragCleanup(idx); }, 290);
+    }
+  }
+
+  el.addEventListener('touchend', onEnd, { passive: true });
+  el.addEventListener('touchcancel', function() {
+    if (!dragState.active) return;
+    dragState.active = false;
+    dragState.locked = null;
+    if (dragState.prepared) {
+      var idx = mainTabs.indexOf(currentScreen);
+      dragTranslate(0, true);
+      setTimeout(function() { dragCleanup(idx); }, 290);
+    }
   }, { passive: true });
 });
 
