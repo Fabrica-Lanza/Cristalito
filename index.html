@@ -781,31 +781,8 @@
 <!-- ═══════════════════════════════════════════════════
      BOTTOM NAV
 ════════════════════════════════════════════════════ -->
-<div id="bottomnav">
-  <button class="nav-tab active" id="tab-dashboard" onclick="navTo('dashboard')">
-    <span class="nav-icon">🏠</span>
-    <span class="nav-label">Inicio</span>
-  </button>
-  <button class="nav-tab" id="tab-stock" onclick="navTo('stock')">
-    <span class="nav-icon">📦</span>
-    <span class="nav-label">Stock</span>
-  </button>
-  <button class="nav-tab" id="tab-ventas" onclick="navTo('ventas')">
-    <span class="nav-icon">🧊</span>
-    <span class="nav-label">Ventas</span>
-  </button>
-  <button class="nav-tab" id="tab-clientes" onclick="navTo('clientes')">
-    <span class="nav-icon">👥</span>
-    <span class="nav-label">Clientes</span>
-  </button>
-  <button class="nav-tab" id="tab-mas" onclick="navTo('mas')">
-    <span class="nav-icon">⋯</span>
-    <span class="nav-label">Más</span>
-  </button>
 
-  </div>
-
-  <div class="subpage pt-safe" id="screen-usuarios">
+<div class="subpage pt-safe" id="screen-usuarios">
 
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
       <button onclick="navBack()" style="background:var(--card);border:none;border-radius:10px;padding:8px 12px;font-size:16px;cursor:pointer;box-shadow:var(--shadow)">←</button>
@@ -817,12 +794,6 @@
     <button class="fab" onclick="openModal('modal-nuevo-usuario')">+</button>
   </div>
 
-
-  </div>
-
-</div>
-
-<!-- BOTTOM NAV -->
 <div id="bottomnav">
   <button class="nav-tab active" id="tab-dashboard" onclick="navTo('dashboard')">
     <span class="nav-icon">🏠</span><span class="nav-label">Inicio</span>
@@ -1544,7 +1515,7 @@ var avatarColors = ['#1A3A5C','#2A7CC7','#28A745','#FF6B35','#9B59B6','#E74C3C',
 function renderUsersGrid() {
   var grid = document.getElementById('users-grid');
   if (!grid) return;
-  var url = localStorage.getItem('appsscript_url') || '';
+  var url = API_URL || '';
   var demos = ['Cecilia','Chiche','Diego','Leandro'];
   
   function buildGrid(nombres) {
@@ -1629,7 +1600,7 @@ function pinError() {
 async function doLogin() {
   var errEl = document.getElementById('login-error-2');
   errEl.textContent = '';
-  var url = localStorage.getItem('appsscript_url') || '';
+  var url = API_URL || '';
   if (url) {
     var res = await fetch(url + '?accion=loginNombre&nombre=' + encodeURIComponent(pinNombre) + '&password=' + encodeURIComponent(pinValue))
       .then(function(r) { return r.json(); })
@@ -2381,7 +2352,6 @@ async function toggleUsuario(email, activar) {
 }
 
 // ── SWIPE NAVIGATION ────────────────────────────────────────────
-var mainTabs = ['dashboard', 'stock', 'ventas', 'clientes', 'mas'];
 var swipeStartX = 0, swipeStartY = 0, swipeT = 0;
 document.addEventListener('touchstart', function(e) {
   swipeStartX = e.touches[0].clientX;
