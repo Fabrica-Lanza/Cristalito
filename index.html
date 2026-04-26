@@ -1129,22 +1129,28 @@ var avatarColors = ['#1A3A5C','#2A7CC7','#28A745','#FF6B35','#9B59B6','#E74C3C',
 function renderUsersGrid() {
   var grid = document.getElementById('users-grid');
   if (!grid) return;
-  if (!API_URL) {
-    // fallback demo
+  var url = localStorage.getItem('appsscript_url') || '';
+  if (!url) {
     var demos = [{nombre:'Cecilia'},{nombre:'Chiche'},{nombre:'Diego'},{nombre:'Leandro'}];
     grid.innerHTML = demos.map((u,i) => userCard(u.nombre, avatarColors[i % avatarColors.length])).join('');
     return;
   }
   grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--text3);font-size:13px">Cargando...</div>';
-  apiGet('getUsuarios').then(users => {
-    if (!users || users.length === 0) {
-      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--text3);font-size:13px">Sin usuarios</div>';
-      return;
-    }
-    grid.innerHTML = users.filter(u => u.Activo === 'true').map((u, i) =>
-      userCard(u.Nombre, avatarColors[i % avatarColors.length])
-    ).join('');
-  });
+  fetch(url + '?accion=getUsuarios')
+    .then(r => r.json())
+    .then(json => {
+      if (!json.ok || !json.data || json.data.length === 0) {
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--text3);font-size:13px">Sin usuarios</div>';
+        return;
+      }
+      grid.innerHTML = json.data.filter(u => u.Activo === 'true').map((u, i) =>
+        userCard(u.Nombre, avatarColors[i % avatarColors.length])
+      ).join('');
+    })
+    .catch(() => {
+      var demos = [{nombre:'Cecilia'},{nombre:'Chiche'},{nombre:'Diego'},{nombre:'Leandro'}];
+      grid.innerHTML = demos.map((u,i) => userCard(u.nombre, avatarColors[i % avatarColors.length])).join('');
+    });
 }
 
 function userCard(nombre, color) {
