@@ -1123,42 +1123,45 @@ var usuarios = {
 // ── PIN LOGIN ──────────────────────────────────────────────────
 var pinValue = '';
 var pinNombre = '';
-
 var avatarColors = ['#1A3A5C','#2A7CC7','#28A745','#FF6B35','#9B59B6','#E74C3C','#16A085','#D35400'];
 
 function renderUsersGrid() {
   var grid = document.getElementById('users-grid');
   if (!grid) return;
   var url = localStorage.getItem('appsscript_url') || '';
-  if (!url) {
-    var demos = [{nombre:'Cecilia'},{nombre:'Chiche'},{nombre:'Diego'},{nombre:'Leandro'}];
-    grid.innerHTML = demos.map((u,i) => userCard(u.nombre, avatarColors[i % avatarColors.length])).join('');
-    return;
-  }
-  grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--text3);font-size:13px">Cargando...</div>';
-  fetch(url + '?accion=getUsuarios')
-    .then(r => r.json())
-    .then(json => {
-      if (!json.ok || !json.data || json.data.length === 0) {
-        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--text3);font-size:13px">Sin usuarios</div>';
-        return;
-      }
-      grid.innerHTML = json.data.filter(u => u.Activo === 'true').map((u, i) =>
-        userCard(u.Nombre, avatarColors[i % avatarColors.length])
-      ).join('');
-    })
-    .catch(() => {
-      var demos = [{nombre:'Cecilia'},{nombre:'Chiche'},{nombre:'Diego'},{nombre:'Leandro'}];
-      grid.innerHTML = demos.map((u,i) => userCard(u.nombre, avatarColors[i % avatarColors.length])).join('');
+  var demos = ['Cecilia','Chiche','Diego','Leandro'];
+  
+  function buildGrid(nombres) {
+    grid.innerHTML = '';
+    nombres.forEach(function(nombre, i) {
+      var color = avatarColors[i % avatarColors.length];
+      var initials = nombre.slice(0,2).toUpperCase();
+      var btn = document.createElement('button');
+      btn.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 10px;border-radius:14px;border:2px solid transparent;background:#F0F4F8;cursor:pointer;font-family:inherit;width:100%';
+      var av = document.createElement('div');
+      av.style.cssText = 'width:52px;height:52px;border-radius:50%;background:' + color + ';display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff';
+      av.textContent = initials;
+      var nm = document.createElement('div');
+      nm.style.cssText = 'font-size:14px;font-weight:600;color:#1C1C1E';
+      nm.textContent = nombre;
+      btn.appendChild(av);
+      btn.appendChild(nm);
+      btn.addEventListener('click', function() { selectUserPin(nombre); });
+      grid.appendChild(btn);
     });
-}
-
-function userCard(nombre, color) {
-  var initials = nombre.slice(0,2).toUpperCase();
-  return '<button style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 10px;border-radius:14px;border:2px solid transparent;background:#F0F4F8;cursor:pointer;font-family:inherit;transition:all 0.15s;width:100%" onclick="selectUserPin(\'' + nombre + '\')">' +
-    '<div style="width:52px;height:52px;border-radius:50%;background:' + color + ';display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff">' + initials + '</div>' +
-    '<div style="font-size:14px;font-weight:600;color:var(--text)">' + nombre + '</div>' +
-    '</button>';
+  }
+  
+  if (!url) { buildGrid(demos); return; }
+  
+  grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:#8E9BA8;font-size:13px">Cargando...</div>';
+  fetch(url + '?accion=getUsuarios')
+    .then(function(r) { return r.json(); })
+    .then(function(json) {
+      if (!json.ok || !json.data || json.data.length === 0) { buildGrid(demos); return; }
+      var nombres = json.data.filter(function(u) { return u.Activo === 'true'; }).map(function(u) { return u.Nombre; });
+      buildGrid(nombres.length ? nombres : demos);
+    })
+    .catch(function() { buildGrid(demos); });
 }
 
 function selectUserPin(nombre) {
@@ -1181,7 +1184,7 @@ function pinKey(digit) {
   if (pinValue.length >= 4) return;
   pinValue += digit;
   updatePinDots();
-  if (pinValue.length === 4) setTimeout(doLogin, 120);
+  if (pinValue.length === 4) { setTimeout(doLogin, 120); }
 }
 
 function pinDel() {
@@ -1191,7 +1194,7 @@ function pinDel() {
 
 function updatePinDots() {
   var dots = document.querySelectorAll('.pin-dot');
-  dots.forEach((d, i) => {
+  dots.forEach(function(d, i) {
     d.classList.toggle('filled', i < pinValue.length);
     d.classList.remove('error');
   });
@@ -1199,38 +1202,32 @@ function updatePinDots() {
 
 function pinError() {
   var dots = document.querySelectorAll('.pin-dot');
-  dots.forEach(d => { d.classList.remove('filled'); d.classList.add('error'); });
-  setTimeout(() => {
-    dots.forEach(d => d.classList.remove('error'));
+  dots.forEach(function(d) { d.classList.remove('filled'); d.classList.add('error'); });
+  setTimeout(function() {
+    dots.forEach(function(d) { d.classList.remove('error'); });
     pinValue = '';
     updatePinDots();
   }, 700);
 }
 
 async function doLogin() {
-  var nombre = pinNombre;
-  var pass   = pinValue;
-  var errEl  = document.getElementById('login-error-2');
-  errEl.style.display = 'none';
-
-  if (API_URL) {
-    var res = await apiGet('loginNombre', { nombre: nombre, password: pass });
-    if (!res) {
+  var errEl = document.getElementById('login-error-2');
+  errEl.textContent = '';
+  var url = localStorage.getItem('appsscript_url') || '';
+  if (url) {
+    var res = await fetch(url + '?accion=loginNombre&nombre=' + encodeURIComponent(pinNombre) + '&password=' + encodeURIComponent(pinValue))
+      .then(function(r) { return r.json(); })
+      .catch(function() { return null; });
+    if (!res || !res.ok) {
       pinError();
       errEl.textContent = 'PIN incorrecto';
-      errEl.style.display = 'block';
       return;
     }
-    currentUser = { nombre: res.nombre, rol: res.rol, id: res.vendedorId, emoji: res.nombre.slice(0,2).toUpperCase() };
+    currentUser = { nombre: res.data.nombre, rol: res.data.rol, id: res.data.vendedorId, emoji: res.data.nombre.slice(0,2).toUpperCase() };
   } else {
-    // Fallback local
-    var localUsers = { 'cecilia': { nombre: 'Cecilia', rol: 'admin', id: '', emoji: 'CE' } };
-    var key = nombre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    var found = localUsers[key];
-    if (!found || pass !== '1234') { pinError(); errEl.textContent = 'PIN incorrecto'; errEl.style.display = 'block'; return; }
-    currentUser = found;
+    if (pinValue !== '1234') { pinError(); errEl.textContent = 'PIN incorrecto'; return; }
+    currentUser = { nombre: pinNombre, rol: 'admin', id: '', emoji: pinNombre.slice(0,2).toUpperCase() };
   }
-
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('userBtn').textContent = currentUser.emoji;
   initApp();
