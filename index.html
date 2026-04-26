@@ -2055,43 +2055,44 @@ var mainTabs = ['dashboard', 'stock', 'ventas', 'clientes', 'mas'];
 var dragStartX = 0;
 var dragStartY = 0;
 var dragCurX = 0;
-var dragLocked = null; // 'h' horizontal, 'v' vertical
+var dragLocked = null;
 var dragActive = false;
+var dragSnapping = false;
 var screenW = window.innerWidth;
 
 window.addEventListener('resize', function() { screenW = window.innerWidth; });
 
-function getScreensEl() { return document.getElementById('screens'); }
-
 function setScreensTranslate(px) {
-  var el = getScreensEl();
+  var el = document.getElementById('screens');
   if (el) el.style.transform = 'translateX(' + px + 'px)';
 }
 
 function setScreensTransition(on) {
-  var el = getScreensEl();
+  var el = document.getElementById('screens');
   if (el) el.style.transition = on ? 'transform 0.28s cubic-bezier(.4,0,.2,1)' : 'none';
 }
 
 function prepareAdjacentScreens(idx) {
-  // Show prev and next screens positioned correctly for drag
   mainTabs.forEach(function(tab, i) {
     var el = document.getElementById('screen-' + tab);
     if (!el) return;
     if (i === idx) {
       el.style.display = 'block';
       el.style.position = 'absolute';
-      el.style.left = '0';
-      el.style.right = '0';
+      el.style.top = '0'; el.style.bottom = '0';
+      el.style.left = '0'; el.style.right = '0';
+      el.style.width = screenW + 'px';
     } else if (i === idx - 1) {
       el.style.display = 'block';
       el.style.position = 'absolute';
+      el.style.top = '0'; el.style.bottom = '0';
       el.style.left = (-screenW) + 'px';
       el.style.right = 'auto';
       el.style.width = screenW + 'px';
     } else if (i === idx + 1) {
       el.style.display = 'block';
       el.style.position = 'absolute';
+      el.style.top = '0'; el.style.bottom = '0';
       el.style.left = screenW + 'px';
       el.style.right = 'auto';
       el.style.width = screenW + 'px';
@@ -2106,8 +2107,8 @@ function cleanupScreens(idx) {
     var el = document.getElementById('screen-' + tab);
     if (!el) return;
     el.style.position = '';
-    el.style.left = '';
-    el.style.right = '';
+    el.style.top = ''; el.style.bottom = '';
+    el.style.left = ''; el.style.right = '';
     el.style.width = '';
     if (i === idx) {
       el.classList.add('active');
@@ -2119,80 +2120,99 @@ function cleanupScreens(idx) {
   });
   setScreensTransition(false);
   setScreensTranslate(0);
+  dragSnapping = false;
 }
-
-var screensEl = document.getElementById('screens');
 
 document.addEventListener('DOMContentLoaded', function() {
   var screensEl = document.getElementById('screens');
   if (!screensEl) return;
 
   screensEl.addEventListener('touchstart', function(e) {
+    // Only on main tabs, not subpages, not while snapping
     if (mainTabs.indexOf(currentScreen) === -1) return;
     if (document.querySelector('.modal-overlay.open')) return;
+    if (dragSnapping) return;
     dragStartX = e.touches[0].clientX;
     dragStartY = e.touches[0].clientY;
     dragCurX = dragStartX;
     dragLocked = null;
     dragActive = true;
-    var idx = mainTabs.indexOf(currentScreen);
-    prepareAdjacentScreens(idx);
-    setScreensTransition(false);
   }, { passive: true });
 
   screensEl.addEventListener('touchmove', function(e) {
-    if (!dragActive) return;
+    if (!dragActive || dragSnapping) return;
     var x = e.touches[0].clientX;
     var y = e.touches[0].clientY;
     var dx = x - dragStartX;
     var dy = y - dragStartY;
 
     if (!dragLocked) {
-      if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+      if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {
         dragLocked = Math.abs(dx) > Math.abs(dy) ? 'h' : 'v';
       }
+      return;
     }
 
     if (dragLocked !== 'h') return;
     e.preventDefault();
 
+    // Prepare adjacent on first horizontal move
+    if (!screensEl._dragPrepared) {
+      screensEl._dragPrepared = true;
+      prepareAdjacentScreens(mainTabs.indexOf(currentScreen));
+      setScreensTransition(false);
+    }
+
     var idx = mainTabs.indexOf(currentScreen);
-    // Resist at edges
+    var resistedDx = dx;
     if ((dx > 0 && idx === 0) || (dx < 0 && idx === mainTabs.length - 1)) {
-      dx = dx * 0.2;
+      resistedDx = dx * 0.15;
     }
     dragCurX = x;
-    setScreensTranslate(dx);
+    setScreensTranslate(resistedDx);
   }, { passive: false });
 
   screensEl.addEventListener('touchend', function(e) {
-    if (!dragActive || dragLocked !== 'h') { dragActive = false; dragLocked = null; return; }
+    if (!dragActive) return;
     dragActive = false;
+    screensEl._dragPrepared = false;
+
+    if (dragLocked !== 'h') { dragLocked = null; return; }
+    dragLocked = null;
+
     var dx = dragCurX - dragStartX;
     var idx = mainTabs.indexOf(currentScreen);
-    var threshold = screenW * 0.3;
+    var threshold = screenW * 0.28;
+    dragSnapping = true;
     setScreensTransition(true);
 
     if (dx < -threshold && idx < mainTabs.length - 1) {
-      // Snap to next
       setScreensTranslate(-screenW);
       setTimeout(function() {
         navTo(mainTabs[idx + 1]);
         cleanupScreens(idx + 1);
-      }, 280);
+      }, 290);
     } else if (dx > threshold && idx > 0) {
-      // Snap to prev
       setScreensTranslate(screenW);
       setTimeout(function() {
         navTo(mainTabs[idx - 1]);
         cleanupScreens(idx - 1);
-      }, 280);
+      }, 290);
     } else {
-      // Snap back
       setScreensTranslate(0);
-      setTimeout(function() { cleanupScreens(idx); }, 280);
+      setTimeout(function() { cleanupScreens(idx); }, 290);
     }
+  }, { passive: true });
+
+  screensEl.addEventListener('touchcancel', function() {
+    if (!dragActive) return;
+    dragActive = false;
+    screensEl._dragPrepared = false;
     dragLocked = null;
+    var idx = mainTabs.indexOf(currentScreen);
+    setScreensTransition(true);
+    setScreensTranslate(0);
+    setTimeout(function() { cleanupScreens(idx); }, 290);
   }, { passive: true });
 });
 
