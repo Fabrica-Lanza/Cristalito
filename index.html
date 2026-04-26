@@ -1772,7 +1772,7 @@ function renderDashboard() {
   } else {
     document.getElementById('dash-ultimas-ventas').innerHTML = ultimas.map(v => `
       <div class="list-item">
-        <div class="list-avatar">${tipoEmoji((function(){var _c=clientes.find(function(c){return c.id===v.cliente}); return _c?_c.tipo:undefined;})()}</div>
+        <div class="list-avatar">${tipoEmoji(clientes.find(c=>c.id===v.cliente)?.tipo)}</div>
         <div class="list-info">
           <div class="list-name">${getNomCliente(v.cliente)}</div>
           <div class="list-sub">${bolsasLabel(v)} · ${getNomVendedor(v.vendedor)}</div>
@@ -1891,7 +1891,7 @@ function renderVentas(filtro) {
   }
   document.getElementById('ventas-lista').innerHTML = filt.map(v => `
     <div class="list-item">
-      <div class="list-avatar">${tipoEmoji((function(){var _c=clientes.find(function(c){return c.id===v.cliente}); return _c?_c.tipo:undefined;})()}</div>
+      <div class="list-avatar">${tipoEmoji(clientes.find(c=>c.id===v.cliente)?.tipo)}</div>
       <div class="list-info">
         <div class="list-name">${getNomCliente(v.cliente)}</div>
         <div class="list-sub">${bolsasLabel(v)} · ${getNomVendedor(v.vendedor)} · ${v.pago}</div>
@@ -2049,7 +2049,7 @@ function renderReportes(p) {
   vendedores.forEach(v=>{ porVend[v.id]={cant:0,monto:0}; });
   ventFilt.forEach(v=>{ if(v.vendedor in porVend){ porVend[v.vendedor].cant++; porVend[v.vendedor].monto+=(v.pv2||0); } });
   var sorted = Object.entries(porVend).sort((a,b)=>b[1].monto-a[1].monto);
-  var maxM = (sorted[0] && sorted[0][1] && sorted[0][1].monto) || 1;
+  var maxM = sorted[0]?.[1]?.monto || 1;
   document.getElementById('rep-por-vendedor').innerHTML = sorted.filter(e=>e[1].monto>0).map(([id,data]) => `
     <div style="margin-bottom:12px">
       <div style="display:flex;justify-content:space-between;margin-bottom:4px">
@@ -2381,5 +2381,6 @@ setInterval(() => {
   var dot = document.getElementById('syncDot');
   dot.className = 'sync-dot ok';
 }, 3000);
+</script>
 </body>
 </html>
