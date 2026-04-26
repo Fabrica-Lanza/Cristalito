@@ -86,6 +86,21 @@
     -webkit-overflow-scrolling: touch;
   }
   .screen.active { display: block; }
+  /* Subpages outside carousel need full width */
+  #screen-produccion, #screen-vendedores, #screen-reportes,
+  #screen-heladeras, #screen-config, #screen-usuarios {
+    width: 100vw !important;
+    min-width: 100vw !important;
+    position: fixed !important;
+    top: var(--topbar-h); left: 0; right: 0; bottom: var(--nav-h);
+    z-index: 50;
+    background: var(--bg);
+    display: none;
+  }
+  #screen-produccion.active, #screen-vendedores.active, #screen-reportes.active,
+  #screen-heladeras.active, #screen-config.active, #screen-usuarios.active {
+    display: block !important;
+  }
 
   /* ── BOTTOM NAV ── */
   #bottomnav {
