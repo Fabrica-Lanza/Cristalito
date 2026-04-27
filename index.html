@@ -1311,73 +1311,7 @@ async function sincronizarDatos() {
   setSyncStatus('ok');
 }
 
-// Override registrar functions to use API
-var _regVenta = registrarVenta;
-registrarVenta = async function() {
-  if (!API_URL) { _regVenta(); return; }
-  var vendedor = document.getElementById('v-vendedor').value;
-  var cliente = document.getElementById('v-cliente').value;
-  var b17=parseInt(document.getElementById('v-b17').value)||0;
-  var b3=parseInt(document.getElementById('v-b3').value)||0;
-  var b6=parseInt(document.getElementById('v-b6').value)||0;
-  var b12=parseInt(document.getElementById('v-b12').value)||0;
-  var pv2=parseFloat(document.getElementById('v-pv2').value)||0;
-  if (!vendedor||!cliente) { showToast('Completar vendedor y cliente','⚠️'); return; }
-  if (b17+b3+b6+b12===0) { showToast('Ingresá al menos una bolsa','⚠️'); return; }
-  if (pv2===0) { showToast('Ingresá el monto','⚠️'); return; }
-  var res = await apiPost('postVenta', { vendedor:vendedor, cliente:cliente, heladera:document.getElementById('v-heladera').value, b17:b17, b3:b3, b6:b6, b12:b12, pv2:pv2, pago:document.getElementById('v-pago').value, cobrado:cobradoVal });
-  if (res&&res.ok) { closeModal('modal-venta'); showToast('Venta guardada ✓'); await sincronizarDatos(); ['v-b17','v-b3','v-b6','v-b12','v-pv2'].forEach(function(id){document.getElementById(id).value='0';}); selectCobrado('si'); }
-};
 
-var _regRetiro = registrarRetiro;
-registrarRetiro = async function() {
-  if (!API_URL) { _regRetiro(); return; }
-  var b17=parseInt(document.getElementById('r-b17').value)||0, b3=parseInt(document.getElementById('r-b3').value)||0, b6=parseInt(document.getElementById('r-b6').value)||0, b12=parseInt(document.getElementById('r-b12').value)||0;
-  if (b17+b3+b6+b12===0) { showToast('Ingresá al menos una bolsa','⚠️'); return; }
-  var res = await apiPost('postRetiro', { repartidor:document.getElementById('r-repartidor').value, camara:document.getElementById('r-camara').value, cliente:document.getElementById('r-cliente').value, b17:b17, b3:b3, b6:b6, b12:b12 });
-  if (res&&res.ok) { if (res.data&&res.data.stockActual) stockCamara=res.data.stockActual; closeModal('modal-retiro'); showToast('Retiro guardado ✓'); renderDashboard(); renderStock(); ['r-b17','r-b3','r-b6','r-b12'].forEach(function(id){document.getElementById(id).value='0';}); }
-};
-
-var _regMerma = registrarMerma;
-registrarMerma = async function() {
-  if (!API_URL) { _regMerma(); return; }
-  var res = await apiPost('postMerma', { quien:document.getElementById('m-quien').value, bolsa:document.getElementById('m-bolsa').value, cant:parseInt(document.getElementById('m-cant').value)||1, motivo:document.getElementById('m-motivo').value });
-  if (res&&res.ok) { if (res.data&&res.data.stockActual) stockCamara=res.data.stockActual; closeModal('modal-merma'); showToast('Merma guardada ✓'); renderStock(); renderDashboard(); }
-};
-
-var _regTurno = registrarTurno;
-registrarTurno = async function() {
-  if (!API_URL) { _regTurno(); return; }
-  var res = await apiPost('postTurno', { operario:document.getElementById('t-operario').value, maquina:document.getElementById('t-maquina').value, inicio:document.getElementById('t-inicio').value, fin:document.getElementById('t-fin').value, kg:parseInt(document.getElementById('t-kg').value)||0, b17:parseInt(document.getElementById('t-b17').value)||0, b3:parseInt(document.getElementById('t-b3').value)||0, b6:parseInt(document.getElementById('t-b6').value)||0, b12:parseInt(document.getElementById('t-b12').value)||0 });
-  if (res&&res.ok) { closeModal('modal-turno'); showToast('Turno guardado ✓'); await sincronizarDatos(); ['t-b17','t-b3','t-b6','t-b12','t-kg'].forEach(function(id){document.getElementById(id).value='0';}); }
-};
-
-var _regCliente = registrarCliente;
-registrarCliente = async function() {
-  if (!API_URL) { _regCliente(); return; }
-  var nombre = document.getElementById('c-nombre').value.trim();
-  if (!nombre) { showToast('Ingresá el nombre','⚠️'); return; }
-  var res = await apiPost('postCliente', { nombre:nombre, tipo:document.getElementById('c-tipo').value, dir:document.getElementById('c-dir').value, dist:parseFloat(document.getElementById('c-dist').value)||0, vendedor:document.getElementById('c-vendedor').value, pago:document.getElementById('c-pago').value });
-  if (res&&res.ok) { closeModal('modal-cliente'); showToast('Cliente guardado ✓'); await sincronizarDatos(); document.getElementById('c-nombre').value=''; document.getElementById('c-dir').value=''; document.getElementById('c-dist').value=''; }
-};
-
-var _guardarConfig = guardarConfig;
-guardarConfig = async function() {
-  var url = document.getElementById('config-appsscript').value;
-  localStorage.setItem('appsscript_url', url);
-  API_URL = url || API_URL;
-  await apiPost('updateConfig', { config: { precio_b17:precios.b17, precio_b3:precios.b3, precio_b6:precios.b6, precio_b12:precios.b12 } });
-  await sincronizarDatos();
-  showToast('Configuración guardada');
-};
-
-var _initApp = initApp;
-initApp = async function() {
-  _initApp();
-  if (API_URL) await sincronizarDatos();
-};
-
-setInterval(async function() { if (API_URL && currentUser) await sincronizarDatos(); }, 60000);
 
 // ── PIN LOGIN ──────────────────────────────────────────────────
 var pinValue = '';
@@ -2105,6 +2039,74 @@ function registrarHeladera() {
   showToast('Heladera agregada');
   renderHeladeras();
 }
+
+// Override registrar functions to use API
+var _regVenta = registrarVenta;
+registrarVenta = async function() {
+  if (!API_URL) { _regVenta(); return; }
+  var vendedor = document.getElementById('v-vendedor').value;
+  var cliente = document.getElementById('v-cliente').value;
+  var b17=parseInt(document.getElementById('v-b17').value)||0;
+  var b3=parseInt(document.getElementById('v-b3').value)||0;
+  var b6=parseInt(document.getElementById('v-b6').value)||0;
+  var b12=parseInt(document.getElementById('v-b12').value)||0;
+  var pv2=parseFloat(document.getElementById('v-pv2').value)||0;
+  if (!vendedor||!cliente) { showToast('Completar vendedor y cliente','⚠️'); return; }
+  if (b17+b3+b6+b12===0) { showToast('Ingresá al menos una bolsa','⚠️'); return; }
+  if (pv2===0) { showToast('Ingresá el monto','⚠️'); return; }
+  var res = await apiPost('postVenta', { vendedor:vendedor, cliente:cliente, heladera:document.getElementById('v-heladera').value, b17:b17, b3:b3, b6:b6, b12:b12, pv2:pv2, pago:document.getElementById('v-pago').value, cobrado:cobradoVal });
+  if (res&&res.ok) { closeModal('modal-venta'); showToast('Venta guardada ✓'); await sincronizarDatos(); ['v-b17','v-b3','v-b6','v-b12','v-pv2'].forEach(function(id){document.getElementById(id).value='0';}); selectCobrado('si'); }
+};
+
+var _regRetiro = registrarRetiro;
+registrarRetiro = async function() {
+  if (!API_URL) { _regRetiro(); return; }
+  var b17=parseInt(document.getElementById('r-b17').value)||0, b3=parseInt(document.getElementById('r-b3').value)||0, b6=parseInt(document.getElementById('r-b6').value)||0, b12=parseInt(document.getElementById('r-b12').value)||0;
+  if (b17+b3+b6+b12===0) { showToast('Ingresá al menos una bolsa','⚠️'); return; }
+  var res = await apiPost('postRetiro', { repartidor:document.getElementById('r-repartidor').value, camara:document.getElementById('r-camara').value, cliente:document.getElementById('r-cliente').value, b17:b17, b3:b3, b6:b6, b12:b12 });
+  if (res&&res.ok) { if (res.data&&res.data.stockActual) stockCamara=res.data.stockActual; closeModal('modal-retiro'); showToast('Retiro guardado ✓'); renderDashboard(); renderStock(); ['r-b17','r-b3','r-b6','r-b12'].forEach(function(id){document.getElementById(id).value='0';}); }
+};
+
+var _regMerma = registrarMerma;
+registrarMerma = async function() {
+  if (!API_URL) { _regMerma(); return; }
+  var res = await apiPost('postMerma', { quien:document.getElementById('m-quien').value, bolsa:document.getElementById('m-bolsa').value, cant:parseInt(document.getElementById('m-cant').value)||1, motivo:document.getElementById('m-motivo').value });
+  if (res&&res.ok) { if (res.data&&res.data.stockActual) stockCamara=res.data.stockActual; closeModal('modal-merma'); showToast('Merma guardada ✓'); renderStock(); renderDashboard(); }
+};
+
+var _regTurno = registrarTurno;
+registrarTurno = async function() {
+  if (!API_URL) { _regTurno(); return; }
+  var res = await apiPost('postTurno', { operario:document.getElementById('t-operario').value, maquina:document.getElementById('t-maquina').value, inicio:document.getElementById('t-inicio').value, fin:document.getElementById('t-fin').value, kg:parseInt(document.getElementById('t-kg').value)||0, b17:parseInt(document.getElementById('t-b17').value)||0, b3:parseInt(document.getElementById('t-b3').value)||0, b6:parseInt(document.getElementById('t-b6').value)||0, b12:parseInt(document.getElementById('t-b12').value)||0 });
+  if (res&&res.ok) { closeModal('modal-turno'); showToast('Turno guardado ✓'); await sincronizarDatos(); ['t-b17','t-b3','t-b6','t-b12','t-kg'].forEach(function(id){document.getElementById(id).value='0';}); }
+};
+
+var _regCliente = registrarCliente;
+registrarCliente = async function() {
+  if (!API_URL) { _regCliente(); return; }
+  var nombre = document.getElementById('c-nombre').value.trim();
+  if (!nombre) { showToast('Ingresá el nombre','⚠️'); return; }
+  var res = await apiPost('postCliente', { nombre:nombre, tipo:document.getElementById('c-tipo').value, dir:document.getElementById('c-dir').value, dist:parseFloat(document.getElementById('c-dist').value)||0, vendedor:document.getElementById('c-vendedor').value, pago:document.getElementById('c-pago').value });
+  if (res&&res.ok) { closeModal('modal-cliente'); showToast('Cliente guardado ✓'); await sincronizarDatos(); document.getElementById('c-nombre').value=''; document.getElementById('c-dir').value=''; document.getElementById('c-dist').value=''; }
+};
+
+var _guardarConfig = guardarConfig;
+guardarConfig = async function() {
+  var url = document.getElementById('config-appsscript').value;
+  localStorage.setItem('appsscript_url', url);
+  API_URL = url || API_URL;
+  await apiPost('updateConfig', { config: { precio_b17:precios.b17, precio_b3:precios.b3, precio_b6:precios.b6, precio_b12:precios.b12 } });
+  await sincronizarDatos();
+  showToast('Configuración guardada');
+};
+
+var _initApp = initApp;
+initApp = async function() {
+  _initApp();
+  if (API_URL) await sincronizarDatos();
+};
+
+setInterval(async function() { if (API_URL && currentUser) await sincronizarDatos(); }, 60000);
 
 // ── USUARIOS ────────────────────────────────────────────────────
 function renderUsuariosScreen() {
