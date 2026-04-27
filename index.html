@@ -1249,7 +1249,8 @@ function navBack() {
     if (!strip) return;
 
     strip.addEventListener('touchstart', function(e) {
-      if (subPages.indexOf(currentScreen) !== -1) return;
+      var dragTabs = ['dashboard', 'stock', 'ventas', 'clientes'];
+      if (dragTabs.indexOf(currentScreen) === -1) return;
       if (document.querySelector('.modal-overlay.open')) return;
       if (snapping) return;
       startX = e.touches[0].clientX;
@@ -1260,7 +1261,8 @@ function navBack() {
     }, { passive: true });
 
     strip.addEventListener('touchmove', function(e) {
-      if (snapping || subPages.indexOf(currentScreen) !== -1) return;
+      var dragTabs = ['dashboard', 'stock', 'ventas', 'clientes'];
+      if (snapping || dragTabs.indexOf(currentScreen) === -1) return;
       var x = e.touches[0].clientX;
       var y = e.touches[0].clientY;
       var dx = x - startX;
