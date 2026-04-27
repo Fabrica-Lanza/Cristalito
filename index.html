@@ -1211,6 +1211,37 @@ function navBack() {
   navTo(prev);
 }
 
+
+// ── DATA STORE ──────────────────────────────────────────────────
+var currentUser = null;
+var currentScreen = 'dashboard';
+var prevScreen = null;
+var cobradoVal = 'si';
+var periodo = 'semana';
+var precios = { b17: 850, b3: 1400, b6: 2500, b12: 4500 };
+var vendedores = [
+  { id: 'v1', nombre: 'Carlos', rol: 'Vendedor', email: 'carlos@lanza.com' },
+  { id: 'v2', nombre: 'Lucía', rol: 'Vendedora', email: 'lucia@lanza.com' },
+  { id: 'v3', nombre: 'Roberto', rol: 'Operario', email: 'roberto@lanza.com' },
+  { id: 'v4', nombre: 'Marta', rol: 'Vendedora', email: 'marta@lanza.com' },
+];
+var clientes = [
+  { id: 'c1', nombre: 'Bar El Nativo', tipo: 'Bar / Restaurante', dir: 'Av. Costanera', dist: 3, vendedor: 'v1', pago: 'Efectivo' },
+  { id: 'c2', nombre: 'Royal House', tipo: 'Casa de fiestas', dir: 'Ruta 9 Km 12', dist: 8, vendedor: 'v2', pago: 'Transferencia' },
+  { id: 'c3', nombre: 'Autoservicio Vilma', tipo: 'Autoservicio', dir: 'Villa Albertina', dist: 5, vendedor: 'v1', pago: 'Mensual' },
+  { id: 'c4', nombre: 'La Estancia', tipo: 'Bar / Restaurante', dir: 'Entre Ríos 672', dist: 2, vendedor: 'v2', pago: 'Efectivo' },
+];
+var heladeras = [
+  { id: 'H01', modelo: 'Tipo 150', cliente: 'c1', estado: 'Activa', cap: 35 },
+  { id: 'H02', modelo: 'Tipo 300', cliente: 'c2', estado: 'Activa', cap: 90 },
+  { id: 'H03', modelo: 'Freezer Horizontal', cliente: 'c3', estado: 'Activa', cap: 8 },
+];
+var turnos = [];
+var retiros = [];
+var mermas = [];
+var ventas = [];
+var stockCamara = { b17: 150, b3: 80, b6: 45, b12: 20 };
+
 // ── API CLIENT ──────────────────────────────────────────────────
 var API_URL = localStorage.getItem('appsscript_url') || 'https://script.google.com/macros/s/AKfycbwXCargPsnBsVZj-welKVi1jpxqV5ChyfSKw1yWAfkhuvDI1ub2eWOW7opIi1WyWUv_FA/exec';
 
