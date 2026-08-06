@@ -1331,7 +1331,7 @@ async function sincronizarDatos() {
   var ventsData = await apiGet('getVentas');
 
   if (vends) vendedores = vends.map(function(v) { return { id:v.ID, nombre:v.Nombre, rol:v.Rol, email:v.Email }; });
-  if (clis) clientes = clis.filter(function(c){return c.Activo==='true';}).map(function(c) { return { id:c.ID, nombre:c.Nombre, tipo:c.Tipo, dir:c.Direccion, dist:c.Distancia, vendedor:c.VendedorID, pago:c.FormaPago }; });
+  if (clis) clientes = clis.filter(function(c){return String(c.Activo).toLowerCase()==='true';}).map(function(c) { return { id:c.ID, nombre:c.Nombre, tipo:c.Tipo, dir:c.Direccion, dist:c.Distancia, vendedor:c.VendedorID, pago:c.FormaPago }; });
   if (hels) heladeras = hels.map(function(h) { return { id:h.ID, modelo:h.Modelo, cliente:h.ClienteID, estado:h.Estado, cap:h.Capacidad }; });
   if (turnsData) turnos = turnsData.map(function(t) { return { fecha:t.Fecha, operario:t.Operario, maquina:t.Maquina, inicio:t.HsInicio, fin:t.HsFin, kg:parseInt(t.KgProducidos||0), b17:parseInt(t.Bolsas17||0), b3:parseInt(t.Bolsas3||0), b6:parseInt(t.Bolsas6||0), b12:parseInt(t.Bolsas12||0) }; });
   if (retsData) retiros = retsData.map(function(r) { return { fecha:r.Fecha, hora:r.Hora, repartidor:r.Repartidor, camara:r.Camara, cliente:r.ClienteDestino, b17:parseInt(r.Bolsas17||0), b3:parseInt(r.Bolsas3||0), b6:parseInt(r.Bolsas6||0), b12:parseInt(r.Bolsas12||0) }; });
@@ -1393,7 +1393,7 @@ function renderUsersGrid() {
     .then(function(r) { return r.json(); })
     .then(function(json) {
       if (!json.ok || !json.data || json.data.length === 0) { buildGrid(demos); return; }
-      var nombres = json.data.filter(function(u) { return u.Activo === 'true'; }).map(function(u) { return u.Nombre; });
+      var nombres = json.data.filter(function(u) { return String(u.Activo).toLowerCase() === 'true'; }).map(function(u) { return u.Nombre; });
       buildGrid(nombres.length ? nombres : demos);
     })
     .catch(function() { buildGrid(demos); });
