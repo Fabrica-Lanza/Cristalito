@@ -616,6 +616,11 @@
         <div class="list-info"><div class="list-name">Usuarios</div><div class="list-sub">Agregar, editar, desactivar</div></div>
         <div style="color:var(--text3);font-size:18px">›</div>
       </div>
+      <div id="item-listas" class="list-item" onclick="navTo('listas')" style="cursor:pointer;display:none">
+        <div class="list-avatar">🏷️</div>
+        <div class="list-info"><div class="list-name">Listas de precios</div><div class="list-sub">PV2 y % de fábrica por lista</div></div>
+        <div style="color:var(--text3);font-size:18px">›</div>
+      </div>
       <div class="list-item" onclick="navTo('config')" style="cursor:pointer">
         <div class="list-avatar">⚙️</div>
         <div class="list-info"><div class="list-name">Configuración</div><div class="list-sub">Precios y máquinas</div></div>
@@ -797,6 +802,19 @@
 
     <div class="card">
       <button class="btn btn-primary btn-block" onclick="guardarConfig()">Guardar configuración</button>
+    </div>
+  </div>
+
+  <div class="subpage pt-safe" id="screen-listas">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <button onclick="navBack()" style="background:var(--card);border:none;border-radius:10px;padding:8px 12px;font-size:16px;cursor:pointer;box-shadow:var(--shadow)">←</button>
+      <div class="section-title" style="margin:0">Listas de precios 🏷️</div>
+    </div>
+    <div class="card" style="padding:0 14px">
+      <div id="listas-lista"></div>
+    </div>
+    <div class="card">
+      <button class="btn btn-primary btn-block" onclick="abrirNuevaLista()">+ Nueva lista</button>
     </div>
   </div>
 
@@ -1236,6 +1254,59 @@
   </div>
 </div>
 
+<!-- Modal: Lista de precios -->
+<div class="modal-overlay" id="modal-lista" onclick="overlayClose(event,'modal-lista')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="lista-titulo">Nueva lista</div>
+    <div class="modal-body">
+      <input type="hidden" id="l-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Nombre</label>
+          <input class="form-input" type="text" id="l-nombre" placeholder="ej: General">
+        </div>
+        <div class="form-group">
+          <label class="form-label">% de la fábrica</label>
+          <input class="form-input" type="number" min="0" max="100" id="l-pct" placeholder="70" oninput="calcPreviewLista()">
+        </div>
+      </div>
+      <label class="form-label" style="margin-bottom:8px;display:block">PV2 (precio al cliente) por bolsa</label>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Mini 1.7kg</label>
+          <input class="form-input" type="number" min="0" id="l-pv2-b17" value="0" oninput="calcPreviewLista()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Chica 3kg</label>
+          <input class="form-input" type="number" min="0" id="l-pv2-b3" value="0" oninput="calcPreviewLista()">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Mediana 6kg</label>
+          <input class="form-input" type="number" min="0" id="l-pv2-b6" value="0" oninput="calcPreviewLista()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Grande 12kg</label>
+          <input class="form-input" type="number" min="0" id="l-pv2-b12" value="0" oninput="calcPreviewLista()">
+        </div>
+      </div>
+      <div id="l-preview" style="background:var(--ice);border-radius:10px;padding:10px;font-size:12px;color:var(--text2);margin-top:4px"></div>
+      <div class="form-group" style="margin-top:10px">
+        <label class="form-label">¿Es la lista predeterminada?</label>
+        <div class="chip-group">
+          <div class="chip" id="l-pred-si" onclick="setPredLista(true)">Sí, predeterminada</div>
+          <div class="chip selected" id="l-pred-no" onclick="setPredLista(false)">No</div>
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px">La predeterminada se usa para los clientes que no tienen una lista asignada.</div>
+      </div>
+      <button class="btn btn-primary btn-block" style="margin-top:8px" onclick="guardarLista()">Guardar lista</button>
+      <button id="l-borrar" class="btn btn-block" style="background:#FDECEA;color:#B3261E;margin-top:8px;display:none" onclick="borrarLista()">Eliminar lista</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal: Editar Cliente -->
 <div class="modal-overlay" id="modal-editar-cliente" onclick="overlayClose(event,'modal-editar-cliente')">
   <div class="modal-sheet">
@@ -1268,6 +1339,11 @@
       <div class="form-group">
         <label class="form-label">Dirección</label>
         <input class="form-input" type="text" id="ec-dir">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Lista de precios</label>
+        <select class="form-input" id="ec-lista"></select>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px">Si no elegís ninguna, se usa la predeterminada.</div>
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -1399,7 +1475,7 @@
 // ── NAVIGATION ───────────────────────────────────────────────────
 var carouselIdx = 0;
 var mainTabs = ['dashboard', 'stock', 'pedidos', 'clientes', 'mas'];
-var subPages = ['produccion', 'vendedores', 'reportes', 'heladeras', 'config', 'usuarios'];
+var subPages = ['produccion', 'vendedores', 'reportes', 'heladeras', 'config', 'usuarios', 'listas'];
 var currentTabIdx = 0;
 var carouselIdx = 0;
 
@@ -1439,6 +1515,7 @@ function navTo(screen) {
     if (screen === 'heladeras') renderHeladeras();
     if (screen === 'config') renderConfig();
     if (screen === 'usuarios') renderUsuariosScreen();
+    if (screen === 'listas') renderListas();
   }
 }
 
@@ -1482,6 +1559,8 @@ var preciosSug = { b17: 0, b3: 0, b6: 0, b12: 0 };
 var stockCamara = { b17: 150, b3: 80, b6: 45, b12: 20 };
 // Motivos de cancelación (editables; se pueden sobreescribir desde config).
 var motivosCancelacion = ['Cliente canceló', 'No hay stock', 'Error de carga', 'Problema de pago', 'Otro'];
+// Listas de precios (Modelo B): cada lista tiene nombre, % de fábrica y PV2 por tipo de bolsa.
+var listasPrecios = [];
 
 // ── DATA CLIENT (Firestore) ─────────────────────────────────────
 // Sentinel truthy: mantiene los caminos "con backend" y saltea el modo demo local.
@@ -1588,20 +1667,38 @@ async function fbUpdate(coleccion, id, campos) {
   }
 }
 
+async function fbDelete(coleccion, id) {
+  try {
+    setSyncStatus('loading');
+    await db.collection(coleccion).doc(id).delete();
+    setSyncStatus('ok');
+    return { ok:true };
+  } catch(e) {
+    setSyncStatus('err'); showToast('No se pudo eliminar','❌');
+    return { ok:false, error: e.message };
+  }
+}
+
 async function sincronizarDatos() {
   try {
     setSyncStatus('loading');
     var res = await Promise.all([
       fbGetAll('vendedores'), fbGetAll('clientes'), fbGetAll('heladeras'),
-      fbGetAll('turnos'), fbGetAll('retiros'), fbGetAll('mermas'), fbGetAll('ventas'), fbGetAll('pedidos')
+      fbGetAll('turnos'), fbGetAll('retiros'), fbGetAll('mermas'), fbGetAll('ventas'), fbGetAll('pedidos'),
+      fbGetAll('listas_precios')
     ]);
-    var vends=res[0], clis=res[1], hels=res[2], turnsData=res[3], retsData=res[4], mermsData=res[5], ventsData=res[6], pedsData=res[7];
+    var vends=res[0], clis=res[1], hels=res[2], turnsData=res[3], retsData=res[4], mermsData=res[5], ventsData=res[6], pedsData=res[7], listasData=res[8];
     var cfgDoc = await db.collection('config').doc('app').get();
     var cfg = cfgDoc.exists ? cfgDoc.data() : null;
 
     vendedores = vends.map(function(v){ return { id:v.id, nombre:v.nombre, rol:v.rol, email:v.email||'' }; });
     clientes = clis.map(function(c){
-      return { id:c.id, nombre:c.nombre, tipo:c.tipo||'', dir:c.direccion||'', dist:c.distancia||0, vendedor:c.vendedorId||'', pago:c.formaPago||'', activo:c.activo !== false };
+      return { id:c.id, nombre:c.nombre, tipo:c.tipo||'', dir:c.direccion||'', dist:c.distancia||0, vendedor:c.vendedorId||'', pago:c.formaPago||'', activo:c.activo !== false, lista:c.listaPrecios||'' };
+    });
+    listasPrecios = listasData.map(function(l){
+      return { id:l.id, nombre:l.nombre||'(sin nombre)', pct:parseFloat(l.pctFabrica)||0,
+        pv2:{ b17:parseFloat(l.pv2_b17)||0, b3:parseFloat(l.pv2_b3)||0, b6:parseFloat(l.pv2_b6)||0, b12:parseFloat(l.pv2_b12)||0 },
+        pred: l.predeterminada === true };
     });
     heladeras = hels.map(function(h){ return { id:h.id, modelo:h.modelo, cliente:h.clienteId||'', estado:h.estado, cap:h.capacidad||0 }; });
     turnos = turnsData.map(function(t){ return { id:t.id, fecha:t.fecha, operario:t.operario, maquina:t.maquina, inicio:t.hsInicio, fin:t.hsFin, kg:t.kgProducidos||0, b17:t.bolsas17||0, b3:t.bolsas3||0, b6:t.bolsas6||0, b12:t.bolsas12||0 }; });
@@ -1631,6 +1728,7 @@ async function sincronizarDatos() {
     renderPedidos(typeof pedidosFiltroActual !== 'undefined' ? pedidosFiltroActual : 'pendiente');
     if (document.getElementById('prod-lista')) renderProduccion();
     renderClientes('');
+    if (document.getElementById('screen-listas') && document.getElementById('screen-listas').classList.contains('active')) renderListas();
     setSyncStatus('ok');
   } catch(e) {
     setSyncStatus('err');
@@ -1743,7 +1841,7 @@ async function doLogin() {
   currentUser = { nombre: u.nombre, rol: u.rol, id: u.vendedorId || '', emoji: u.nombre.slice(0,2).toUpperCase() };
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('userBtn').textContent = currentUser.emoji;
-  if (currentUser.rol && currentUser.rol.toLowerCase() === 'admin') { var el = document.getElementById('item-usuarios'); if (el) el.style.display = 'flex'; }
+  if (currentUser.rol && currentUser.rol.toLowerCase() === 'admin') { var el = document.getElementById('item-usuarios'); if (el) el.style.display = 'flex'; var el2 = document.getElementById('item-listas'); if (el2) el2.style.display = 'flex'; }
   initApp();
 }
 
@@ -2551,6 +2649,7 @@ function abrirFichaCliente(id) {
       <div class="summary-row"><span class="summary-label">Distancia</span><span class="summary-val">${c.dist} km</span></div>
       <div class="summary-row"><span class="summary-label">Vendedor</span><span class="summary-val">${getNomVendedor(c.vendedor)}</span></div>
       <div class="summary-row"><span class="summary-label">Pago habitual</span><span class="summary-val">${c.pago}</span></div>
+      <div class="summary-row"><span class="summary-label">Lista de precios</span><span class="summary-val">${c.lista && getListaById(c.lista) ? getListaById(c.lista).nombre : 'Predeterminada' + (getListaPredeterminada() ? ' ('+getListaPredeterminada().nombre+')' : '')}</span></div>
       <div class="summary-row"><span class="summary-label">Total ventas</span><span class="summary-val green">${fmtMoneda(totalVent)}</span></div>
     </div>
     ${hel.length > 0 ? `<div class="card-title" style="margin-bottom:8px">Heladeras asignadas</div>` + hel.map(h=>`
@@ -2593,6 +2692,12 @@ function abrirEditarCliente(id) {
   document.getElementById('ec-dir').value = c.dir || '';
   document.getElementById('ec-dist').value = c.dist || 0;
   document.getElementById('ec-pago').value = c.pago || 'Efectivo';
+  // Lista de precios asignada (opción vacía = predeterminada).
+  var selL = document.getElementById('ec-lista');
+  var predL = getListaPredeterminada();
+  selL.innerHTML = '<option value="">Predeterminada' + (predL ? ' (' + predL.nombre + ')' : '') + '</option>' +
+    listasPrecios.map(function(l){ return '<option value="' + l.id + '">' + l.nombre + '</option>'; }).join('');
+  selL.value = c.lista || '';
   // Vendedor: solo Cecilia (admin) lo puede cambiar.
   var selV = document.getElementById('ec-vendedor');
   selV.innerHTML = vendedores.map(v => `<option value="${v.id}">${v.nombre} (${v.rol})</option>`).join('');
@@ -2623,6 +2728,7 @@ async function guardarEditarCliente() {
     direccion: document.getElementById('ec-dir').value,
     distancia: parseFloat(document.getElementById('ec-dist').value)||0,
     formaPago: document.getElementById('ec-pago').value,
+    listaPrecios: document.getElementById('ec-lista').value,
     activo: editClienteActivo
   };
   // El vendedor solo lo guarda si es admin; el vendedor no lo puede cambiar.
@@ -2634,6 +2740,146 @@ async function guardarEditarCliente() {
   await sincronizarDatos();
   populateSelects();
   renderClientes(document.getElementById('clientes-search').value);
+}
+
+// ── LISTAS DE PRECIOS (Etapa 1) ─────────────────────────────────
+var tiposLista = [['b17','Mini'],['b3','Chica'],['b6','Med'],['b12','Grande']];
+var _seedListaHecho = false;
+
+function getListaById(id) { return listasPrecios.find(function(l){ return l.id === id; }) || null; }
+function getListaPredeterminada() { return listasPrecios.find(function(l){ return l.pred; }) || null; }
+// Lista efectiva de un cliente: la asignada, o la predeterminada como respaldo.
+function getListaCliente(clienteId) {
+  var c = clientes.find(function(x){ return x.id === clienteId; });
+  if (c && c.lista) { var l = getListaById(c.lista); if (l) return l; }
+  return getListaPredeterminada();
+}
+
+async function renderListas() {
+  var cont = document.getElementById('listas-lista');
+  if (!cont) return;
+  // Si no hay ninguna lista, se crea "General" de ejemplo (una sola vez).
+  if (listasPrecios.length === 0 && !_seedListaHecho) {
+    _seedListaHecho = true;
+    await fbAdd('listas_precios', {
+      nombre: 'General', pctFabrica: 70,
+      pv2_b17: 1200, pv2_b3: 2000, pv2_b6: 3600, pv2_b12: 6400,
+      predeterminada: true
+    });
+    await sincronizarDatos();
+    return;
+  }
+  if (listasPrecios.length === 0) {
+    cont.innerHTML = '<div class="empty" style="padding:24px 0"><div class="empty-icon">🏷️</div><div class="empty-text">Sin listas</div></div>';
+    return;
+  }
+  cont.innerHTML = listasPrecios.map(function(l){
+    var pv1txt = tiposLista.map(function(t){ return t[1] + ' ' + fmtMoneda(Math.round(l.pv2[t[0]] * l.pct / 100)); }).join(' · ');
+    return '<div class="list-item" onclick="abrirEditarLista(\'' + l.id + '\')" style="cursor:pointer">' +
+      '<div class="list-avatar">🏷️</div>' +
+      '<div class="list-info">' +
+        '<div class="list-name">' + l.nombre + (l.pred ? ' <span class="badge badge-blue" style="font-size:10px">Predeterminada</span>' : '') + '</div>' +
+        '<div class="list-sub">Fábrica ' + l.pct + '% · PV1: ' + pv1txt + '</div>' +
+      '</div>' +
+      '<div style="color:var(--text3);font-size:18px">›</div>' +
+    '</div>';
+  }).join('');
+}
+
+var editListaPred = false;
+function setPredLista(v) {
+  editListaPred = v;
+  document.getElementById('l-pred-si').classList.toggle('selected', v);
+  document.getElementById('l-pred-no').classList.toggle('selected', !v);
+}
+
+function calcPreviewLista() {
+  var pct = parseFloat(document.getElementById('l-pct').value)||0;
+  var el = document.getElementById('l-preview');
+  var partes = tiposLista.map(function(t){
+    var pv2 = parseFloat(document.getElementById('l-pv2-' + t[0]).value)||0;
+    var pv1 = Math.round(pv2 * pct / 100);
+    var vend = pv2 - pv1;
+    return t[1] + ': fábrica ' + fmtMoneda(pv1) + ' · vendedor ' + fmtMoneda(vend);
+  });
+  el.innerHTML = 'Con ' + pct + '% de fábrica:<br>' + partes.join('<br>');
+}
+
+function abrirNuevaLista() {
+  document.getElementById('lista-titulo').textContent = 'Nueva lista';
+  document.getElementById('l-id').value = '';
+  document.getElementById('l-nombre').value = '';
+  document.getElementById('l-pct').value = 70;
+  ['b17','b3','b6','b12'].forEach(function(k){ document.getElementById('l-pv2-' + k).value = 0; });
+  setPredLista(false);
+  document.getElementById('l-borrar').style.display = 'none';
+  calcPreviewLista();
+  openModal('modal-lista');
+}
+
+function abrirEditarLista(id) {
+  var l = getListaById(id);
+  if (!l) return;
+  document.getElementById('lista-titulo').textContent = 'Editar lista';
+  document.getElementById('l-id').value = l.id;
+  document.getElementById('l-nombre').value = l.nombre;
+  document.getElementById('l-pct').value = l.pct;
+  document.getElementById('l-pv2-b17').value = l.pv2.b17;
+  document.getElementById('l-pv2-b3').value = l.pv2.b3;
+  document.getElementById('l-pv2-b6').value = l.pv2.b6;
+  document.getElementById('l-pv2-b12').value = l.pv2.b12;
+  setPredLista(l.pred);
+  document.getElementById('l-borrar').style.display = 'block';
+  calcPreviewLista();
+  openModal('modal-lista');
+}
+
+async function guardarLista() {
+  var id = document.getElementById('l-id').value;
+  var nombre = document.getElementById('l-nombre').value.trim();
+  if (!nombre) { showToast('Ingresá el nombre de la lista','⚠️'); return; }
+  var pct = parseFloat(document.getElementById('l-pct').value)||0;
+  if (pct < 0 || pct > 100) { showToast('El % debe estar entre 0 y 100','⚠️'); return; }
+  var campos = {
+    nombre: nombre, pctFabrica: pct,
+    pv2_b17: parseFloat(document.getElementById('l-pv2-b17').value)||0,
+    pv2_b3:  parseFloat(document.getElementById('l-pv2-b3').value)||0,
+    pv2_b6:  parseFloat(document.getElementById('l-pv2-b6').value)||0,
+    pv2_b12: parseFloat(document.getElementById('l-pv2-b12').value)||0,
+    predeterminada: editListaPred
+  };
+  var res;
+  if (id) { res = await fbUpdate('listas_precios', id, campos); }
+  else { res = await fbAdd('listas_precios', campos); }
+  if (!res.ok) return;
+  // Si esta quedó como predeterminada, saco la marca a las demás.
+  if (editListaPred) {
+    var nuevoId = id || (res.id || '');
+    for (var i=0; i<listasPrecios.length; i++) {
+      var otra = listasPrecios[i];
+      if (otra.pred && otra.id !== nuevoId) { await fbUpdate('listas_precios', otra.id, { predeterminada:false }); }
+    }
+  }
+  closeModal('modal-lista');
+  showToast('Lista guardada ✓');
+  await sincronizarDatos();
+  renderListas();
+}
+
+async function borrarLista() {
+  var id = document.getElementById('l-id').value;
+  if (!id) return;
+  var l = getListaById(id);
+  var aviso = l && l.pred
+    ? 'Es la lista predeterminada. Si la borrás, los clientes sin lista se quedan sin precios hasta que marques otra. ¿Eliminar igual?'
+    : '¿Eliminar esta lista?';
+  if (!confirm(aviso)) return;
+  var res = await fbDelete('listas_precios', id);
+  if (!res || !res.ok) { showToast('No se pudo eliminar','❌'); return; }
+  closeModal('modal-lista');
+  showToast('Lista eliminada ✓');
+  await sincronizarDatos();
+  renderListas();
 }
 
 // ── RENDER PRODUCCIÓN ──
