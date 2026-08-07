@@ -2186,6 +2186,15 @@ function filtrarPedidos(f, el) {
   renderPedidos(f);
 }
 
+// Salta al filtro de un estado y selecciona su chip (para ver el pedido en su nuevo estado).
+function irFiltroPedidos(estado) {
+  var target = null;
+  document.querySelectorAll('#pedidos-filtro .chip').forEach(function(c){
+    if ((c.getAttribute('onclick')||'').indexOf("'"+estado+"'") !== -1) target = c;
+  });
+  filtrarPedidos(estado, target);
+}
+
 function estadoBadge(estado) {
   if (estado === 'preparado') return '<span class="badge badge-blue" style="font-size:10px">Preparado</span>';
   if (estado === 'entregado') return '<span class="badge badge-green" style="font-size:10px">Entregado</span>';
@@ -2319,7 +2328,7 @@ async function entregarPedido(id) {
   showToast('Entrega registrada ✓');
   expandedPedido = null;
   await sincronizarDatos();
-  renderPedidos(pedidosFiltroActual);
+  irFiltroPedidos('entregado');
 }
 
 function calcSugerido(item) {
@@ -2499,7 +2508,7 @@ async function prepararPedido(id) {
   showToast('Pedido preparado ✓');
   expandedPedido = null;
   await sincronizarDatos();
-  renderPedidos(pedidosFiltroActual);
+  irFiltroPedidos('preparado');
 }
 
 async function tomarPedido() {
@@ -2667,7 +2676,7 @@ async function guardarCancelarPedido() {
   showToast('Pedido cancelado ✓');
   expandedPedido = null;
   await sincronizarDatos();
-  renderPedidos(pedidosFiltroActual);
+  irFiltroPedidos('cancelado');
 }
 
 var clientesVerActivos = true;
