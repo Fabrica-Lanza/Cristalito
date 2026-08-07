@@ -932,7 +932,7 @@
     <div class="modal-body">
       <div class="form-group">
         <label class="form-label">Cliente</label>
-        <select class="form-input" id="p-cliente" onchange="autocompletarVendedor()"></select>
+        <select class="form-input" id="p-cliente" onchange="autocompletarVendedor();actualizarListaTomar()"></select>
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -966,16 +966,7 @@
         </div>
       </div>
       <div id="p-stock-aviso" style="margin-top:4px"></div>
-      <div class="card" style="padding:12px;margin-top:8px;background:var(--ice)">
-        <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px">
-          <span style="color:var(--text2)">A liquidar a fábrica</span>
-          <span style="font-weight:700;color:var(--accent)" id="p-afabrica">$0</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;font-size:14px">
-          <span style="color:var(--text2)">Precio sugerido</span>
-          <span style="font-weight:600" id="p-sugerido">$0</span>
-        </div>
-      </div>
+      <div id="p-precios"></div>
       <button class="btn btn-primary btn-block" style="margin-top:12px" onclick="tomarPedido()">Tomar pedido</button>
     </div>
   </div>
@@ -1014,17 +1005,7 @@
         </div>
       </div>
       <div id="e-stock-aviso" style="margin-top:4px"></div>
-      <div class="form-row" style="margin-top:8px">
-        <div class="form-group">
-          <label class="form-label" id="e-lbl-afabrica">A fábrica (PV1)</label>
-          <input class="form-input" type="number" min="0" id="e-afabrica">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Sugerido al cliente (PV2)</label>
-          <input class="form-input" type="number" min="0" id="e-sugerido">
-        </div>
-      </div>
-      <div id="e-pv1-nota" style="font-size:12px;color:var(--text2);margin-top:2px"></div>
+      <div id="e-precios"></div>
       <button class="btn btn-primary btn-block" style="margin-top:12px" onclick="guardarEditarPedido()">Guardar cambios</button>
     </div>
   </div>
@@ -1506,6 +1487,12 @@ function navTo(screen) {
     if (screen === 'pedidos') renderPedidos('pendiente');
     if (screen === 'clientes') renderClientes('');
   } else {
+    // Candado: pantallas solo para admin.
+    if ((screen === 'listas' || screen === 'usuarios') && !(currentUser && currentUser.rol && currentUser.rol.toLowerCase() === 'admin')) {
+      showToast('Solo disponible para el administrador','🔒');
+      navTo('mas');
+      return;
+    }
     document.querySelectorAll('.subpage').forEach(function(s) { s.classList.remove('active'); });
     var sub = document.getElementById('screen-' + screen);
     if (sub) sub.classList.add('active');
@@ -1705,7 +1692,7 @@ async function sincronizarDatos() {
     retiros = retsData.map(function(r){ return { id:r.id, fecha:r.fecha, hora:r.hora, repartidor:r.repartidor, camara:r.camara, cliente:r.clienteDestino, b17:r.bolsas17||0, b3:r.bolsas3||0, b6:r.bolsas6||0, b12:r.bolsas12||0 }; });
     mermas = mermsData.map(function(m){ return { id:m.id, fecha:m.fecha, quien:m.quien, bolsa:m.tipoBolsa, cant:m.cantidad||0, motivo:m.motivo }; });
     ventas = ventsData.map(function(v){ return { id:v.id, fecha:v.fecha, hora:v.hora, vendedor:v.vendedor, cliente:v.cliente, heladera:v.heladera, b17:v.bolsas17||0, b3:v.bolsas3||0, b6:v.bolsas6||0, b12:v.bolsas12||0, pv1:v.pv1||0, pv2:v.pv2||0, pago:v.formaPago, cobrado:v.cobrado }; });
-    pedidos = pedsData.map(function(p){ return { id:p.id, estado:p.estado||'pendiente', cliente:p.clienteId, vendedor:p.vendedorId, asignado:p.asignadoA, b17:p.bolsas17||0, b3:p.bolsas3||0, b6:p.bolsas6||0, b12:p.bolsas12||0, aFabrica:p.aFabrica||0, sugerido:p.sugerido||0, cobrado:p.cobrado, pago:p.formaPago, fechaTomado:p.fechaTomado, fechaPreparado:p.fechaPreparado, fechaEntregado:p.fechaEntregado, horaTomado:p.horaTomado||'', horaPreparado:p.horaPreparado||'', horaEntregado:p.horaEntregado||'', motivoCancel:p.motivoCancelacion||'', fechaCancelado:p.fechaCancelado||null, canceladoPor:p.canceladoPor||'' }; });
+    pedidos = pedsData.map(function(p){ return { id:p.id, estado:p.estado||'pendiente', cliente:p.clienteId, vendedor:p.vendedorId, asignado:p.asignadoA, b17:p.bolsas17||0, b3:p.bolsas3||0, b6:p.bolsas6||0, b12:p.bolsas12||0, aFabrica:p.aFabrica||0, sugerido:p.sugerido||0, cobrado:p.cobrado, pago:p.formaPago, fechaTomado:p.fechaTomado, fechaPreparado:p.fechaPreparado, fechaEntregado:p.fechaEntregado, horaTomado:p.horaTomado||'', horaPreparado:p.horaPreparado||'', horaEntregado:p.horaEntregado||'', motivoCancel:p.motivoCancelacion||'', fechaCancelado:p.fechaCancelado||null, canceladoPor:p.canceladoPor||'', listaId:p.listaId||'', listaNombre:p.listaNombre||'', pct:parseFloat(p.pctFabrica)||0, pu:{ b17:parseFloat(p.pu_b17)||0, b3:parseFloat(p.pu_b3)||0, b6:parseFloat(p.pu_b6)||0, b12:parseFloat(p.pu_b12)||0 }, pl:{ b17:parseFloat(p.pl_b17)||0, b3:parseFloat(p.pl_b3)||0, b6:parseFloat(p.pl_b6)||0, b12:parseFloat(p.pl_b12)||0 }, ajustadoPor:p.ajustadoPor||'' }; });
     if (cfg) {
       if (cfg.precio_b17) precios.b17 = parseFloat(cfg.precio_b17);
       if (cfg.precio_b3) precios.b3 = parseFloat(cfg.precio_b3);
@@ -1841,7 +1828,9 @@ async function doLogin() {
   currentUser = { nombre: u.nombre, rol: u.rol, id: u.vendedorId || '', emoji: u.nombre.slice(0,2).toUpperCase() };
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('userBtn').textContent = currentUser.emoji;
-  if (currentUser.rol && currentUser.rol.toLowerCase() === 'admin') { var el = document.getElementById('item-usuarios'); if (el) el.style.display = 'flex'; var el2 = document.getElementById('item-listas'); if (el2) el2.style.display = 'flex'; }
+  var esAdm = currentUser.rol && currentUser.rol.toLowerCase() === 'admin';
+  var elU = document.getElementById('item-usuarios'); if (elU) elU.style.display = esAdm ? 'flex' : 'none';
+  var elL = document.getElementById('item-listas'); if (elL) elL.style.display = esAdm ? 'flex' : 'none';
   initApp();
 }
 
@@ -1932,7 +1921,18 @@ function hoy() {
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
 function ahora() { return new Date().toTimeString().slice(0,5); }
-// Tiempo total de tomado a entregado. Devuelve texto tipo "2h 15m" o "" si falta el dato.
+// Describe qué precios ajustó Cecilia respecto a la lista original (para trazabilidad).
+function detalleAjuste(p) {
+  if (!p.pu || !p.pl) return '';
+  var difs = [];
+  tiposBolsa.forEach(function(t){
+    var k = t[0];
+    if ((p[k]||0) > 0 && (p.pu[k]||0) !== (p.pl[k]||0) && (p.pl[k]||0) > 0) {
+      difs.push(t[1] + ': ' + fmtMoneda(p.pl[k]) + ' → ' + fmtMoneda(p.pu[k]));
+    }
+  });
+  return difs.length ? ' (' + difs.join(', ') + ')' : '';
+}
 function tiempoTotalPedido(p) {
   if (!p.fechaTomado || !p.horaTomado || !p.fechaEntregado || !p.horaEntregado) return '';
   var ini = new Date(p.fechaTomado + 'T' + p.horaTomado + ':00');
@@ -2239,8 +2239,11 @@ function renderPedidos(filtro) {
       fila('Cliente', getNomCliente(p.cliente)) +
       (cli && cli.dir ? fila('Dirección', cli.dir) : '') +
       fila('Bolsas', bolsasLabel(p)) +
-      fila('A fábrica', fmtMoneda(p.aFabrica||0)) +
-      fila('Sugerido', fmtMoneda(p.sugerido||0)) +
+      (p.listaNombre ? fila('Lista', p.listaNombre + (p.pct ? ' · fábrica ' + p.pct + '%' : '')) : '') +
+      fila('Al cliente (PV2)', fmtMoneda(p.sugerido||0)) +
+      fila('A fábrica (PV1)', fmtMoneda(p.aFabrica||0)) +
+      fila('Cobra vendedor', fmtMoneda((p.sugerido||0) - (p.aFabrica||0))) +
+      (p.ajustadoPor ? fila('Precio ajustado por', p.ajustadoPor + detalleAjuste(p)) : '') +
       fila('Lo tomó', quien) +
       fila('Asignado a', getNomVendedor(p.asignado)) +
       fila('Tomado', p.fechaTomado || '—') +
@@ -2332,12 +2335,91 @@ function leerBolsasPedido() {
   };
 }
 
-function calcTotalesPedido() {
-  var b = leerBolsasPedido();
-  document.getElementById('p-afabrica').textContent = fmtMoneda(calcPV1(b));
-  document.getElementById('p-sugerido').textContent = fmtMoneda(calcSugerido(b));
-  renderAvisoStock(b, 'p-stock-aviso');
+// ── MOTOR DE PRECIOS (Modelo B) ─────────────────────────────────
+// Contexto por modal: 'p' = tomar, 'e' = editar.
+var listaCtx = { p:null, e:null };      // lista efectiva (con .pct y .pv2 originales)
+var unitInitCtx = { p:null, e:null };   // precios unitarios iniciales (para editar = los del pedido)
+
+function leerBolsasPref(prefix) {
+  return {
+    b17: parseInt((document.getElementById(prefix+'-b17')||{}).value)||0,
+    b3:  parseInt((document.getElementById(prefix+'-b3')||{}).value)||0,
+    b6:  parseInt((document.getElementById(prefix+'-b6')||{}).value)||0,
+    b12: parseInt((document.getElementById(prefix+'-b12')||{}).value)||0
+  };
 }
+
+// Precios unitarios efectivos: si es admin y hay inputs, de los inputs; si no, de los iniciales o de la lista.
+function unitPreciosPref(prefix) {
+  var lista = listaCtx[prefix], init = unitInitCtx[prefix], unit = {};
+  ['b17','b3','b6','b12'].forEach(function(k){
+    var inp = document.getElementById(prefix+'-pu-'+k);
+    if (esAdmin() && inp) unit[k] = parseFloat(inp.value)||0;
+    else if (init) unit[k] = init[k]||0;
+    else unit[k] = lista ? (lista.pv2[k]||0) : 0;
+  });
+  return unit;
+}
+
+function computeTotalesPedido(bolsas, unit, pct) {
+  var pv2 = (bolsas.b17||0)*(unit.b17||0) + (bolsas.b3||0)*(unit.b3||0) + (bolsas.b6||0)*(unit.b6||0) + (bolsas.b12||0)*(unit.b12||0);
+  var pv1 = Math.round((pct||0)/100 * pv2);
+  return { pv2:pv2, pv1:pv1, vend: pv2 - pv1 };
+}
+
+function _grpPU(prefix, k, label, val) {
+  return '<div class="form-group"><label class="form-label">'+label+'</label>'
+    + '<input class="form-input" type="number" min="0" id="'+prefix+'-pu-'+k+'" value="'+val+'" oninput="recalcPrecios(\''+prefix+'\')"></div>';
+}
+function _row2(l, v) {
+  return '<div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px"><span style="color:var(--text2)">'+l+'</span>'+v+'</div>';
+}
+
+// Construye el bloque de precios una vez (con inputs si es admin).
+function buildPrecios(prefix) {
+  var cont = document.getElementById(prefix+'-precios');
+  if (!cont) return;
+  var lista = listaCtx[prefix];
+  var esAdm = esAdmin();
+  var init = unitInitCtx[prefix] || (lista ? lista.pv2 : {b17:0,b3:0,b6:0,b12:0});
+  var html = '<div style="font-size:13px;color:var(--text2);margin:8px 0 4px">Lista: <b style="color:var(--text)">' + (lista?lista.nombre:'Sin lista') + '</b>' + (lista?(' · fábrica '+lista.pct+'%'):'') + '</div>';
+  if (esAdm && lista) {
+    html += '<div style="font-size:12px;color:var(--text2);margin-bottom:4px">Precio por bolsa (podés ajustarlo):</div>'
+      + '<div class="form-row">' + _grpPU(prefix,'b17','Mini 1.7kg',init.b17||0) + _grpPU(prefix,'b3','Chica 3kg',init.b3||0) + '</div>'
+      + '<div class="form-row">' + _grpPU(prefix,'b6','Mediana 6kg',init.b6||0) + _grpPU(prefix,'b12','Grande 12kg',init.b12||0) + '</div>';
+  }
+  html += '<div class="card" style="padding:12px;margin-top:8px;background:var(--ice)">'
+    + _row2('A fábrica (PV1)', '<span id="'+prefix+'-t-pv1" style="font-weight:700;color:var(--accent)">$0</span>')
+    + _row2('Al cliente (PV2)', '<span id="'+prefix+'-t-pv2" style="font-weight:600">$0</span>')
+    + _row2('Cobra vendedor', '<span id="'+prefix+'-t-vend">$0</span>')
+    + '</div>'
+    + '<div id="'+prefix+'-t-ajuste" style="font-size:12px;color:#9A5B12;margin-top:4px"></div>';
+  cont.innerHTML = html;
+  recalcPrecios(prefix);
+}
+
+// Recalcula solo los totales (sin rehacer los inputs).
+function recalcPrecios(prefix) {
+  var lista = listaCtx[prefix];
+  var bolsas = leerBolsasPref(prefix);
+  var unit = unitPreciosPref(prefix);
+  var r = computeTotalesPedido(bolsas, unit, lista?lista.pct:0);
+  var set = function(id,v){ var el=document.getElementById(id); if(el) el.textContent=v; };
+  set(prefix+'-t-pv1', fmtMoneda(r.pv1));
+  set(prefix+'-t-pv2', fmtMoneda(r.pv2));
+  set(prefix+'-t-vend', fmtMoneda(r.vend));
+  var aj = '';
+  if (esAdmin() && lista) {
+    var dif = ['b17','b3','b6','b12'].some(function(k){ return (unit[k]||0) !== (lista.pv2[k]||0); });
+    if (dif) aj = '✎ Precio ajustado por ' + ((currentUser&&currentUser.nombre)||'admin');
+  }
+  set(prefix+'-t-ajuste', aj);
+  renderAvisoStock(bolsas, prefix+'-stock-aviso');
+}
+
+// Compat: las cajas de bolsas llaman a esto.
+function calcTotalesPedido() { recalcPrecios('p'); }
+function calcTotalesEditar() { recalcPrecios('e'); }
 
 // Muestra el stock disponible por tipo y avisa (sin bloquear) si el pedido lo excede.
 function renderAvisoStock(b, elId) {
@@ -2372,8 +2454,16 @@ function abrirTomarPedido() {
     if (pa) pa.value = currentUser.id;
   }
   autocompletarVendedor();
-  calcTotalesPedido();
+  actualizarListaTomar();
   openModal('modal-tomar-pedido');
+}
+
+// Toma la lista del cliente (o la predeterminada) y arma el bloque de precios.
+function actualizarListaTomar() {
+  var cid = document.getElementById('p-cliente').value;
+  listaCtx.p = getListaCliente(cid);
+  unitInitCtx.p = null; // en tomar, los precios arrancan de la lista
+  buildPrecios('p');
 }
 
 function autocompletarVendedor() {
@@ -2416,14 +2506,26 @@ async function tomarPedido() {
   var cliente = document.getElementById('p-cliente').value;
   var vendedor = document.getElementById('p-vendedor').value;
   var asignado = document.getElementById('p-asignado').value;
-  var b = leerBolsasPedido();
+  var b = leerBolsasPref('p');
   if (!cliente) { showToast('Elegí un cliente','⚠️'); return; }
   if (b.b17+b.b3+b.b6+b.b12 === 0) { showToast('Ingresá al menos una bolsa','⚠️'); return; }
+  var lista = listaCtx.p;
+  if (!lista) { showToast('El cliente no tiene lista ni hay predeterminada','⚠️'); return; }
+  var unit = unitPreciosPref('p');
+  var r = computeTotalesPedido(b, unit, lista.pct);
+  var ajustadoPor = '';
+  if (esAdmin() && ['b17','b3','b6','b12'].some(function(k){ return (unit[k]||0) !== (lista.pv2[k]||0); })) {
+    ajustadoPor = currentUser.nombre;
+  }
   var res = await fbAdd('pedidos', {
     estado: 'pendiente',
     clienteId: cliente, vendedorId: vendedor, asignadoA: asignado, asignadoARepartidor: '',
     bolsas17: b.b17, bolsas3: b.b3, bolsas6: b.b6, bolsas12: b.b12,
-    aFabrica: calcPV1(b), sugerido: calcSugerido(b),
+    aFabrica: r.pv1, sugerido: r.pv2,
+    listaId: lista.id, listaNombre: lista.nombre, pctFabrica: lista.pct,
+    pu_b17: unit.b17, pu_b3: unit.b3, pu_b6: unit.b6, pu_b12: unit.b12,
+    pl_b17: lista.pv2.b17, pl_b3: lista.pv2.b3, pl_b6: lista.pv2.b6, pl_b12: lista.pv2.b12,
+    ajustadoPor: ajustadoPor,
     cobrado: 'no', formaPago: '',
     fechaTomado: hoy(), horaTomado: ahora(),
     fechaPreparado: null, horaPreparado: null,
@@ -2440,23 +2542,6 @@ async function tomarPedido() {
 // ── EDITAR PEDIDO (solo pendiente) ──────────────────────────────
 function esAdmin() { return currentUser && currentUser.rol && currentUser.rol.toLowerCase() === 'admin'; }
 
-function leerBolsasEditar() {
-  return {
-    b17: parseInt(document.getElementById('e-b17').value)||0,
-    b3:  parseInt(document.getElementById('e-b3').value)||0,
-    b6:  parseInt(document.getElementById('e-b6').value)||0,
-    b12: parseInt(document.getElementById('e-b12').value)||0
-  };
-}
-
-function calcTotalesEditar() {
-  var b = leerBolsasEditar();
-  renderAvisoStock(b, 'e-stock-aviso');
-  // Al cambiar bolsas se recalculan los precios base. PV2 el vendedor lo puede pisar a mano después.
-  document.getElementById('e-afabrica').value = calcPV1(b);
-  document.getElementById('e-sugerido').value = calcSugerido(b);
-}
-
 function abrirEditarPedido(id) {
   var p = pedidos.find(function(x){ return x.id === id; });
   if (!p) return;
@@ -2467,19 +2552,11 @@ function abrirEditarPedido(id) {
   document.getElementById('e-b3').value  = p.b3||0;
   document.getElementById('e-b6').value  = p.b6||0;
   document.getElementById('e-b12').value = p.b12||0;
-  document.getElementById('e-afabrica').value = p.aFabrica||0;
-  document.getElementById('e-sugerido').value = p.sugerido||0;
-  // PV1 solo lo edita Cecilia (admin).
-  var af = document.getElementById('e-afabrica');
-  var nota = document.getElementById('e-pv1-nota');
-  if (esAdmin()) {
-    af.readOnly = false; af.style.background = '';
-    nota.textContent = '';
-  } else {
-    af.readOnly = true; af.style.background = 'var(--ice)';
-    nota.textContent = 'El precio a fábrica (PV1) solo lo edita Cecilia. Vos podés ajustar el sugerido (PV2).';
-  }
-  renderAvisoStock({b17:p.b17,b3:p.b3,b6:p.b6,b12:p.b12}, 'e-stock-aviso');
+  // La lista y el % quedan fijos (los del pedido). Precios de lista originales = pl.
+  listaCtx.e = { id:p.listaId||'', nombre:p.listaNombre||'—', pct:p.pct||0, pv2:{ b17:p.pl.b17, b3:p.pl.b3, b6:p.pl.b6, b12:p.pl.b12 } };
+  // Precios usados actuales (pueden estar ya ajustados por Cecilia).
+  unitInitCtx.e = { b17:p.pu.b17, b3:p.pu.b3, b6:p.pu.b6, b12:p.pu.b12 };
+  buildPrecios('e');
   openModal('modal-editar-pedido');
 }
 
@@ -2487,14 +2564,21 @@ async function guardarEditarPedido() {
   var id = document.getElementById('e-id').value;
   var p = pedidos.find(function(x){ return x.id === id; });
   if (!p || p.estado !== 'pendiente') { showToast('No se puede editar','⚠️'); return; }
-  var b = leerBolsasEditar();
+  var b = leerBolsasPref('e');
   if (b.b17+b.b3+b.b6+b.b12 === 0) { showToast('Ingresá al menos una bolsa','⚠️'); return; }
-  var sugerido = parseInt(document.getElementById('e-sugerido').value)||0;
-  // Si no es admin, el PV1 va siempre por precio de lista (no se toca a mano).
-  var aFabrica = esAdmin() ? (parseInt(document.getElementById('e-afabrica').value)||0) : calcPV1(b);
+  var lista = listaCtx.e;
+  var unit = unitPreciosPref('e');
+  var r = computeTotalesPedido(b, unit, lista?lista.pct:0);
+  // Ajuste: si es admin y tocó algún precio respecto a la lista original. Si no es admin, se mantiene el que había.
+  var ajustadoPor = p.ajustadoPor || '';
+  if (esAdmin()) {
+    ajustadoPor = (lista && ['b17','b3','b6','b12'].some(function(k){ return (unit[k]||0) !== (lista.pv2[k]||0); })) ? currentUser.nombre : '';
+  }
   var res = await fbUpdate('pedidos', id, {
     bolsas17:b.b17, bolsas3:b.b3, bolsas6:b.b6, bolsas12:b.b12,
-    aFabrica:aFabrica, sugerido:sugerido
+    aFabrica:r.pv1, sugerido:r.pv2,
+    pu_b17:unit.b17, pu_b3:unit.b3, pu_b6:unit.b6, pu_b12:unit.b12,
+    ajustadoPor: ajustadoPor
   });
   if (!res.ok) return;
   closeModal('modal-editar-pedido');
