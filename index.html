@@ -553,6 +553,11 @@
         <div class="chip" onclick="filtrarPedidos('cancelado', this)">Cancelados</div>
         <div class="chip" onclick="filtrarPedidos('todos', this)">Todos</div>
       </div>
+      <div id="pedidos-fecha-box" style="display:none;align-items:center;gap:8px;margin-top:10px">
+        <span style="font-size:13px;color:var(--text2)">Ver del día:</span>
+        <input type="date" class="form-input" id="pedidos-fecha" style="width:auto;padding:6px 10px" onchange="cambiarFechaPedidos(this.value)">
+        <button class="chip" onclick="cambiarFechaPedidos('')">Hoy</button>
+      </div>
     </div>
 
     <div class="card">
@@ -2245,6 +2250,7 @@ async function marcarCobrado(id) {
 
 // ── PEDIDOS (paso 1: tomar) ──────────────────────────────────────
 var pedidosFiltroActual = 'pendiente';
+var pedidosFecha = ''; // '' = hoy; si no, una fecha ISO para ver historial de entregados/cancelados
 var expandedPedido = null;
 var entCobrado = 'si';
 
@@ -2259,7 +2265,19 @@ function filtrarPedidos(f, el) {
   document.querySelectorAll('#pedidos-filtro .chip').forEach(c=>c.classList.remove('selected'));
   if (el) el.classList.add('selected');
   pedidosFiltroActual = f;
+  // El selector de fecha aparece solo para historial (entregados, cancelados, todos).
+  var box = document.getElementById('pedidos-fecha-box');
+  if (box) box.style.display = (f === 'entregado' || f === 'cancelado' || f === 'todos') ? 'flex' : 'none';
+  var inp = document.getElementById('pedidos-fecha');
+  if (inp && !inp.value) inp.value = pedidosFecha || hoy();
   renderPedidos(f);
+}
+
+function cambiarFechaPedidos(v) {
+  pedidosFecha = v || '';
+  var inp = document.getElementById('pedidos-fecha');
+  if (inp) inp.value = pedidosFecha || hoy();
+  renderPedidos(pedidosFiltroActual);
 }
 
 // Salta al filtro de un estado y selecciona su chip (para ver el pedido en su nuevo estado).
@@ -2281,8 +2299,18 @@ function estadoBadge(estado) {
 function renderPedidos(filtro) {
   var lista = document.getElementById('pedidos-lista');
   if (!lista) return;
+  var fecha = pedidosFecha || hoy();
+  // Pendientes y preparados siempre; entregados y cancelados solo del día elegido.
   var filt = pedidos.slice().reverse().filter(function(p){
-    return filtro === 'todos' ? true : p.estado === filtro;
+    if (filtro === 'pendiente' || filtro === 'preparado') return p.estado === filtro;
+    if (filtro === 'entregado') return p.estado === 'entregado' && p.fechaEntregado === fecha;
+    if (filtro === 'cancelado') return p.estado === 'cancelado' && p.fechaCancelado === fecha;
+    if (filtro === 'todos') {
+      if (p.estado === 'pendiente' || p.estado === 'preparado') return true;
+      if (p.estado === 'entregado') return p.fechaEntregado === fecha;
+      if (p.estado === 'cancelado') return p.fechaCancelado === fecha;
+    }
+    return false;
   });
 
   var aLiquidar = pedidos.filter(function(p){ return p.cobrado !== 'si' && (p.estado === 'preparado' || p.estado === 'entregado'); })
