@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cristalito-v46';
+const CACHE_NAME = 'cristalito-v47';
 const urlsToCache = ['/Cristalito/', '/Cristalito/index.html', '/Cristalito/manifest.json'];
 
 self.addEventListener('install', event => {
