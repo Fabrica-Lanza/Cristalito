@@ -589,59 +589,37 @@
     <button class="fab" onclick="openModal('modal-cliente')">+</button>
   </div>
 
+  <!-- ── MI CUENTA (vendedor) ── -->
+    <div class="tab-panel pt-safe" id="screen-micuenta">
+      <div class="section-title">Mi cuenta 💰</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:12px">Lo que le debés a la fábrica por tus pedidos (PV1), menos lo que ya entregaste.</div>
+      <div class="card" style="padding:14px">
+        <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px"><span style="color:var(--text2)">Adeudo a fábrica</span><span id="mc-adeudado" style="font-weight:600">$0</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px"><span style="color:var(--text2)">Ya entregué</span><span id="mc-pagado" style="font-weight:600">$0</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:18px;border-top:1px solid var(--border);padding-top:10px;margin-top:4px"><span style="font-weight:700">Mi saldo</span><span id="mc-saldo" style="font-weight:700;color:var(--accent)">$0</span></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Mis pedidos que suman</div></div>
+        <div id="mc-pedidos"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Mis recibos</div></div>
+        <div id="mc-recibos"></div>
+      </div>
+    </div>
+
   <!-- ── MÁS ── -->
 
     <div class="tab-panel pt-safe" id="screen-mas">
 
     <div class="section-title">Más opciones</div>
 
-    <div class="card" style="padding:0 14px">
-      <div class="list-item" onclick="navTo('produccion')" style="cursor:pointer">
-        <div class="list-avatar">🏭</div>
-        <div class="list-info"><div class="list-name">Producción</div><div class="list-sub">Registrar turno, kg por máquina</div></div>
-        <div style="color:var(--text3);font-size:18px">›</div>
-      </div>
-      <div class="list-item" onclick="navTo('vendedores')" style="cursor:pointer">
-        <div class="list-avatar">🧑</div>
-        <div class="list-info"><div class="list-name">Vendedores</div><div class="list-sub">Ranking, liquidación, clientes</div></div>
-        <div style="color:var(--text3);font-size:18px">›</div>
-      </div>
-      <div id="item-reportes" class="list-item" onclick="navTo('reportes')" style="cursor:pointer;display:none">
-        <div class="list-avatar">📊</div>
-        <div class="list-info"><div class="list-name">Reportes</div><div class="list-sub">Producción, ventas, rentabilidad</div></div>
-        <div style="color:var(--text3);font-size:18px">›</div>
-      </div>
-      <div class="list-item" onclick="navTo('heladeras')" style="cursor:pointer">
-        <div class="list-avatar">❄️</div>
-        <div class="list-info"><div class="list-name">Heladeras</div><div class="list-sub">Consignación, estado, asignación</div></div>
-        <div style="color:var(--text3);font-size:18px">›</div>
-      </div>
-      <div id="item-usuarios" class="list-item" onclick="navTo('usuarios')" style="cursor:pointer;display:none">
-        <div class="list-avatar">👤</div>
-        <div class="list-info"><div class="list-name">Usuarios</div><div class="list-sub">Agregar, editar, desactivar</div></div>
-        <div style="color:var(--text3);font-size:18px">›</div>
-      </div>
-      <div id="item-listas" class="list-item" onclick="navTo('listas')" style="cursor:pointer;display:none">
-        <div class="list-avatar">🏷️</div>
-        <div class="list-info"><div class="list-name">Listas de precios</div><div class="list-sub">PV2 y % de fábrica por lista</div></div>
-        <div style="color:var(--text3);font-size:18px">›</div>
-      </div>
-      <div id="item-liquidacion" class="list-item" onclick="navTo('liquidacion')" style="cursor:pointer;display:none">
-        <div class="list-avatar">💰</div>
-        <div class="list-info"><div class="list-name">Liquidación</div><div class="list-sub">Cuenta y recibos por vendedor</div></div>
-        <div style="color:var(--text3);font-size:18px">›</div>
-      </div>
-      <div class="list-item" onclick="navTo('config')" style="cursor:pointer">
-        <div class="list-avatar">⚙️</div>
-        <div class="list-info"><div class="list-name">Configuración</div><div class="list-sub">Precios y máquinas</div></div>
-        <div style="color:var(--text3);font-size:18px">›</div>
-      </div>
-    </div>
+    <div class="card" style="padding:0 14px" id="mas-lista"></div>
 
     <div style="text-align:center;margin-top:20px;color:var(--text3);font-size:12px">
       <div style="font-size:28px;margin-bottom:6px">🧊</div>
-      <div>Cristalito v2.4 — Pedidos (flujo completo)</div>
-      <div>Fábrica Frigorífica Lanza · 2026</div>
+      <div>Cristalito · Fábrica Frigorífica Lanza</div>
+      <div>2026</div>
     </div>
   </div>
 
@@ -656,6 +634,8 @@
       <div class="section-title" style="margin:0">Producción 🏭</div>
     </div>
 
+    <div id="prod-rolideras" style="margin-bottom:16px"></div>
+
     <div class="metric-grid">
       <div class="metric-card accent">
         <div class="metric-label">Producido hoy</div>
@@ -663,22 +643,20 @@
         <div class="metric-sub">kg totales</div>
       </div>
       <div class="metric-card">
-        <div class="metric-label">Turnos hoy</div>
+        <div class="metric-label">Maquinadas hoy</div>
         <div class="metric-value" id="prod-hoy-turnos">0</div>
-        <div class="metric-sub">registrados</div>
+        <div class="metric-sub">registradas</div>
       </div>
     </div>
 
     <div class="card">
       <div class="card-header">
-        <div class="card-title">Historial de turnos</div>
+        <div class="card-title">Historial de maquinadas</div>
       </div>
       <div id="prod-lista">
-        <div class="empty"><div class="empty-icon">🏭</div><div class="empty-text">Sin turnos registrados</div></div>
+        <div class="empty"><div class="empty-icon">🏭</div><div class="empty-text">Sin maquinadas registradas</div></div>
       </div>
     </div>
-
-    <button class="fab" onclick="openModal('modal-turno')">+</button>
   </div>
 
   <!-- ── VENDEDORES ── -->
@@ -790,6 +768,11 @@
       <div id="config-precios"></div>
     </div>
 
+    <div class="card">
+      <div class="card-header"><div class="card-title">Capacidad por bolsa (kg)</div></div>
+      <div id="config-capacidad"></div>
+    </div>
+
     <div class="card" style="padding:0 14px">
       <div class="list-item">
         <div class="list-avatar">🛞</div>
@@ -863,23 +846,7 @@
     <button class="fab" onclick="openModal('modal-nuevo-usuario')">+</button>
   </div>
 
-<div id="bottomnav">
-  <button class="nav-tab active" id="tab-dashboard" onclick="navTo('dashboard')">
-    <span class="nav-icon">🏠</span><span class="nav-label">Inicio</span>
-  </button>
-  <button class="nav-tab" id="tab-stock" onclick="navTo('stock')">
-    <span class="nav-icon">📦</span><span class="nav-label">Stock</span>
-  </button>
-  <button class="nav-tab" id="tab-pedidos" onclick="navTo('pedidos')">
-    <span class="nav-icon">🧊</span><span class="nav-label">Pedidos</span>
-  </button>
-  <button class="nav-tab" id="tab-clientes" onclick="navTo('clientes')">
-    <span class="nav-icon">👥</span><span class="nav-label">Clientes</span>
-  </button>
-  <button class="nav-tab" id="tab-mas" onclick="navTo('mas')">
-    <span class="nav-icon">⋯</span><span class="nav-label">Más</span>
-  </button>
-</div>
+<div id="bottomnav"></div>
 
 <!-- Modal: Nueva Venta -->
 <div class="modal-overlay" id="modal-venta" onclick="overlayClose(event,'modal-venta')">
@@ -1156,57 +1123,38 @@
 <div class="modal-overlay" id="modal-turno" onclick="overlayClose(event,'modal-turno')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title">Registrar Turno</div>
+    <div class="modal-title">Finalizar maquinada</div>
     <div class="modal-body">
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Operario</label>
-          <select class="form-input" id="t-operario"></select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Máquina</label>
-          <select class="form-input" id="t-maquina">
-            <option value="R1">Rolítera 1 (Amoníaco)</option>
-            <option value="R2">Rolítera 2 (Freón)</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Hora inicio</label>
-          <input class="form-input" type="time" id="t-inicio" value="06:00">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Hora fin</label>
-          <input class="form-input" type="time" id="t-fin" value="14:00">
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Kg producidos</label>
-        <input class="form-input" type="number" min="0" placeholder="ej: 3000" id="t-kg">
-      </div>
-      <label class="form-label" style="margin-bottom:8px;display:block">Bolsas elaboradas</label>
+      <input type="hidden" id="t-id">
+      <div id="t-resumen" style="font-size:14px;color:var(--text2);margin-bottom:12px"></div>
+      <label class="form-label" style="margin-bottom:8px;display:block">Bolsas embolsadas</label>
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Mini 1.7kg</label>
-          <input class="form-input" type="number" min="0" value="0" id="t-b17">
+          <input class="form-input" type="number" min="0" value="0" id="t-b17" oninput="calcKgMaquinada()">
         </div>
         <div class="form-group">
           <label class="form-label">Chica 3kg</label>
-          <input class="form-input" type="number" min="0" value="0" id="t-b3">
+          <input class="form-input" type="number" min="0" value="0" id="t-b3" oninput="calcKgMaquinada()">
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Mediana 6kg</label>
-          <input class="form-input" type="number" min="0" value="0" id="t-b6">
+          <input class="form-input" type="number" min="0" value="0" id="t-b6" oninput="calcKgMaquinada()">
         </div>
         <div class="form-group">
           <label class="form-label">Grande 12kg</label>
-          <input class="form-input" type="number" min="0" value="0" id="t-b12">
+          <input class="form-input" type="number" min="0" value="0" id="t-b12" oninput="calcKgMaquinada()">
         </div>
       </div>
-      <button class="btn btn-primary btn-block" style="margin-top:8px" onclick="registrarTurno()">Registrar turno</button>
+      <div class="card" style="padding:12px;margin-top:4px;background:var(--ice)">
+        <div style="display:flex;justify-content:space-between;font-size:14px">
+          <span style="color:var(--text2)">Total producido</span>
+          <span style="font-weight:700;color:var(--accent)" id="t-kg-calc">0 kg</span>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-block" style="margin-top:12px" onclick="finalizarMaquinada()">Confirmar y cerrar maquinada</button>
     </div>
   </div>
 </div>
@@ -1535,61 +1483,131 @@
 // ── NAVIGATION ───────────────────────────────────────────────────
 var carouselIdx = 0;
 var mainTabs = ['dashboard', 'stock', 'pedidos', 'clientes', 'mas'];
-var subPages = ['produccion', 'vendedores', 'reportes', 'heladeras', 'config', 'usuarios', 'listas', 'liquidacion'];
+var subPages = ['produccion', 'vendedores', 'reportes', 'heladeras', 'config', 'usuarios', 'listas', 'liquidacion', 'micuenta'];
 var currentTabIdx = 0;
 var carouselIdx = 0;
 
 function setCarouselIdx() {}
 
+// Cada pantalla y su función de render.
+var RENDERERS = {
+  dashboard: function(){ renderDashboard(); },
+  stock: function(){ renderStock(); },
+  pedidos: function(){ renderPedidos('pendiente'); },
+  clientes: function(){ renderClientes(''); },
+  micuenta: function(){ renderMiCuenta(); },
+  produccion: function(){ renderProduccion(); },
+  vendedores: function(){ renderVendedores(); },
+  reportes: function(){ renderReportes('semana'); },
+  heladeras: function(){ renderHeladeras(); },
+  config: function(){ renderConfig(); },
+  usuarios: function(){ renderUsuariosScreen(); },
+  listas: function(){ renderListas(); },
+  liquidacion: function(){ renderLiquidacion(); },
+  mas: function(){ renderMasMenu(); }
+};
+
+function esScreenAdmin(screen) {
+  return screen === 'listas' || screen === 'usuarios' || screen === 'liquidacion' || screen === 'reportes' || screen === 'vendedores' || screen === 'config';
+}
+
 function navTo(screen) {
+  // Candado: pantallas solo para admin.
+  if (esScreenAdmin(screen) && !(currentUser && currentUser.rol && currentUser.rol.toLowerCase() === 'admin')) {
+    showToast('Solo disponible para el administrador','🔒');
+    navTo('mas');
+    return;
+  }
   prevScreen = currentScreen;
   currentScreen = screen;
-  var isTab = mainTabs.indexOf(screen) !== -1;
 
+  // Resalta el botón de la barra si existe; si no, resalta "Más".
   document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
-  if (isTab) {
-    var tab = document.getElementById('tab-' + screen);
-    if (tab) tab.classList.add('active');
-  } else {
-    var masTab = document.getElementById('tab-mas');
-    if (masTab) masTab.classList.add('active');
-  }
+  var esTab = mainTabs.indexOf(screen) !== -1;
+  var btn = document.getElementById('tab-' + (esTab ? screen : 'mas'));
+  if (btn) btn.classList.add('active');
 
-  if (isTab) {
-    document.querySelectorAll('.subpage').forEach(function(s) { s.classList.remove('active'); });
-    document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); p.scrollTop = 0; });
-    var panel = document.getElementById('screen-' + screen);
-    if (panel) { panel.classList.add('active'); panel.scrollTop = 0; }
-    if (screen === 'dashboard') renderDashboard();
-    if (screen === 'stock') renderStock();
-    if (screen === 'ventas') renderVentas('hoy');
-    if (screen === 'pedidos') renderPedidos('pendiente');
-    if (screen === 'clientes') renderClientes('');
-  } else {
-    // Candado: pantallas solo para admin.
-    if ((screen === 'listas' || screen === 'usuarios' || screen === 'liquidacion' || screen === 'reportes') && !(currentUser && currentUser.rol && currentUser.rol.toLowerCase() === 'admin')) {
-      showToast('Solo disponible para el administrador','🔒');
-      navTo('mas');
-      return;
-    }
-    document.querySelectorAll('.subpage').forEach(function(s) { s.classList.remove('active'); });
-    var sub = document.getElementById('screen-' + screen);
-    if (sub) sub.classList.add('active');
-    if (screen === 'produccion') renderProduccion();
-    if (screen === 'vendedores') renderVendedores();
-    if (screen === 'reportes') renderReportes('semana');
-    if (screen === 'heladeras') renderHeladeras();
-    if (screen === 'config') renderConfig();
-    if (screen === 'usuarios') renderUsuariosScreen();
-    if (screen === 'listas') renderListas();
-    if (screen === 'liquidacion') renderLiquidacion();
-  }
+  // Muestra la pantalla (sea tab-panel o subpage) y oculta el resto.
+  document.querySelectorAll('.subpage').forEach(function(s) { s.classList.remove('active'); });
+  document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); p.scrollTop = 0; });
+  var el = document.getElementById('screen-' + screen);
+  if (el) { el.classList.add('active'); el.scrollTop = 0; }
+  if (RENDERERS[screen]) RENDERERS[screen]();
 }
 
 function navBack() {
   document.querySelectorAll('.subpage').forEach(function(s) { s.classList.remove('active'); });
   var prev = prevScreen && mainTabs.indexOf(prevScreen) !== -1 ? prevScreen : 'mas';
   navTo(prev);
+}
+
+// ── NAVEGACIÓN POR ROL ──────────────────────────────────────────
+function rolLower() { return (currentUser && currentUser.rol ? currentUser.rol : '').toLowerCase(); }
+
+// Barra inferior según el rol.
+function tabsPorRol() {
+  var r = rolLower();
+  if (r === 'admin') return [['dashboard','🏠','Inicio'],['stock','📦','Stock'],['produccion','🏭','Producción'],['pedidos','🧊','Pedidos'],['mas','⋯','Más']];
+  if (r === 'vendedor') return [['pedidos','🧊','Pedidos'],['clientes','👥','Clientes'],['micuenta','💰','Mi cuenta'],['mas','⋯','Más']];
+  if (r === 'operario') return [['produccion','🏭','Producción'],['stock','📦','Stock'],['mas','⋯','Más']];
+  if (r === 'operario/vendedor') return [['produccion','🏭','Producción'],['pedidos','🧊','Pedidos'],['clientes','👥','Clientes'],['mas','⋯','Más']];
+  return [['dashboard','🏠','Inicio'],['pedidos','🧊','Pedidos'],['clientes','👥','Clientes'],['mas','⋯','Más']];
+}
+function renderBottomNav() {
+  var tabs = tabsPorRol();
+  mainTabs = tabs.map(function(t){ return t[0]; });
+  var nav = document.getElementById('bottomnav');
+  if (nav) nav.innerHTML = tabs.map(function(t){
+    return '<button class="nav-tab" id="tab-'+t[0]+'" onclick="navTo(\''+t[0]+'\')"><span class="nav-icon">'+t[1]+'</span><span class="nav-label">'+t[2]+'</span></button>';
+  }).join('');
+}
+
+// Menú "Más" según el rol (lo que no está en la barra).
+var MAS_CATALOG = {
+  clientes:['👥','Clientes','Tus clientes'],
+  stock:['📦','Stock','Hielo en cámara'],
+  micuenta:['💰','Mi cuenta','Tu saldo y recibos'],
+  heladeras:['❄️','Heladeras','Estado y asignación'],
+  vendedores:['🧑','Vendedores','Ranking y clientes'],
+  reportes:['📊','Reportes','Métricas y ventas'],
+  listas:['🏷️','Listas de precios','PV2 y % por lista'],
+  liquidacion:['💰','Liquidación','Cuenta y recibos'],
+  usuarios:['👤','Usuarios','Altas y permisos'],
+  config:['⚙️','Configuración','Precios y capacidad']
+};
+function masPorRol() {
+  var r = rolLower();
+  if (r === 'admin') return ['clientes','vendedores','reportes','heladeras','listas','liquidacion','usuarios','config'];
+  if (r === 'vendedor') return ['heladeras'];
+  if (r === 'operario') return [];
+  if (r === 'operario/vendedor') return ['stock','micuenta','heladeras'];
+  return [];
+}
+function renderMasMenu() {
+  var cont = document.getElementById('mas-lista'); if (!cont) return;
+  var items = masPorRol();
+  if (!items.length) { cont.innerHTML = '<div class="empty" style="padding:20px 0"><div class="empty-text">Sin más secciones</div></div>'; return; }
+  cont.innerHTML = items.map(function(k){
+    var c = MAS_CATALOG[k]; if (!c) return '';
+    return '<div class="list-item" onclick="navTo(\''+k+'\')" style="cursor:pointer"><div class="list-avatar">'+c[0]+'</div><div class="list-info"><div class="list-name">'+c[1]+'</div><div class="list-sub">'+c[2]+'</div></div><div style="color:var(--text3);font-size:18px">›</div></div>';
+  }).join('');
+}
+
+// Pantalla "Mi cuenta" (vendedor: su propia liquidación).
+function renderMiCuenta() {
+  var vid = currentUser ? currentUser.id : '';
+  var l = liqVendedor(vid);
+  document.getElementById('mc-adeudado').textContent = fmtMoneda(l.adeudado);
+  document.getElementById('mc-pagado').textContent = fmtMoneda(l.pagado);
+  document.getElementById('mc-saldo').textContent = fmtMoneda(l.saldo);
+  var peds = pedidos.filter(function(p){ return p.vendedor === vid && (p.estado === 'preparado' || p.estado === 'entregado'); });
+  document.getElementById('mc-pedidos').innerHTML = peds.length ? peds.map(function(p){
+    return '<div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px solid var(--border)"><span>'+getNomCliente(p.cliente)+' · '+bolsasLabel(p)+' <span style="color:var(--text3)">('+p.estado+')</span></span><span style="font-weight:600">'+fmtMoneda(p.aFabrica||0)+'</span></div>';
+  }).join('') : '<div style="font-size:13px;color:var(--text3);padding:8px 0">Sin pedidos</div>';
+  var recs = recibos.filter(function(r){ return r.vendedorId === vid; }).sort(function(a,b){ return b.numero - a.numero; });
+  document.getElementById('mc-recibos').innerHTML = recs.length ? recs.map(function(r){
+    return '<div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px solid var(--border)"><span>Recibo N° '+String(r.numero).padStart(4,'0')+' · '+r.fecha+'</span><span style="font-weight:600;color:var(--green)">'+fmtMoneda(r.monto)+'</span></div>';
+  }).join('') : '<div style="font-size:13px;color:var(--text3);padding:8px 0">Sin recibos</div>';
 }
 
 
@@ -1630,6 +1648,8 @@ var motivosCancelacion = ['Cliente canceló', 'No hay stock', 'Error de carga', 
 var listasPrecios = [];
 // Recibos de liquidación (pagos de los vendedores a la fábrica).
 var recibos = [];
+// Capacidad en kg de cada formato de bolsa (configurable). Se usa para calcular kg por maquinada.
+var capBolsa = { b17: 1.7, b3: 3, b6: 6, b12: 12 };
 
 // ── DATA CLIENT (Firestore) ─────────────────────────────────────
 // Sentinel truthy: mantiene los caminos "con backend" y saltea el modo demo local.
@@ -1640,7 +1660,7 @@ var stockInicial = { b17:0, b3:0, b6:0, b12:0 };
 // Recalcula el stock de cámara: apertura + producción − retiros − mermas.
 function calcularStockCamara() {
   var s = { b17:stockInicial.b17||0, b3:stockInicial.b3||0, b6:stockInicial.b6||0, b12:stockInicial.b12||0 };
-  turnos.forEach(function(t){ s.b17+=t.b17||0; s.b3+=t.b3||0; s.b6+=t.b6||0; s.b12+=t.b12||0; });
+  turnos.forEach(function(t){ if (t.estado !== 'en_curso') { s.b17+=t.b17||0; s.b3+=t.b3||0; s.b6+=t.b6||0; s.b12+=t.b12||0; } });
   retiros.forEach(function(r){ s.b17-=r.b17||0; s.b3-=r.b3||0; s.b6-=r.b6||0; s.b12-=r.b12||0; });
   // Un pedido preparado o entregado salió de cámara. Pendiente y cancelado no descuentan
   // (al cancelar un preparado, las bolsas buenas vuelven y las rotas se restan aparte como merma).
@@ -1773,7 +1793,7 @@ async function sincronizarDatos() {
       return { id:r.id, numero:parseInt(r.numero)||0, vendedorId:r.vendedorId||'', vendedorNombre:r.vendedorNombre||'', monto:parseFloat(r.monto)||0, fecha:r.fecha||'', hora:r.hora||'', emitidoPor:r.emitidoPor||'' };
     });
     heladeras = hels.map(function(h){ return { id:h.id, modelo:h.modelo, cliente:h.clienteId||'', estado:h.estado, cap:h.capacidad||0 }; });
-    turnos = turnsData.map(function(t){ return { id:t.id, fecha:t.fecha, operario:t.operario, maquina:t.maquina, inicio:t.hsInicio, fin:t.hsFin, kg:t.kgProducidos||0, b17:t.bolsas17||0, b3:t.bolsas3||0, b6:t.bolsas6||0, b12:t.bolsas12||0 }; });
+    turnos = turnsData.map(function(t){ return { id:t.id, fecha:t.fecha, operario:t.operario, maquina:t.maquina, turno:t.turno||'', numero:parseInt(t.numero)||0, estado:t.estado||'terminada', inicio:t.hsInicio, fin:t.hsFin||'', kg:t.kgProducidos||0, b17:t.bolsas17||0, b3:t.bolsas3||0, b6:t.bolsas6||0, b12:t.bolsas12||0 }; });
     retiros = retsData.map(function(r){ return { id:r.id, fecha:r.fecha, hora:r.hora, repartidor:r.repartidor, camara:r.camara, cliente:r.clienteDestino, b17:r.bolsas17||0, b3:r.bolsas3||0, b6:r.bolsas6||0, b12:r.bolsas12||0 }; });
     mermas = mermsData.map(function(m){ return { id:m.id, fecha:m.fecha, quien:m.quien, bolsa:m.tipoBolsa, cant:m.cantidad||0, motivo:m.motivo }; });
     ventas = ventsData.map(function(v){ return { id:v.id, fecha:v.fecha, hora:v.hora, vendedor:v.vendedor, cliente:v.cliente, heladera:v.heladera, b17:v.bolsas17||0, b3:v.bolsas3||0, b6:v.bolsas6||0, b12:v.bolsas12||0, pv1:v.pv1||0, pv2:v.pv2||0, pago:v.formaPago, cobrado:v.cobrado }; });
@@ -1790,6 +1810,10 @@ async function sincronizarDatos() {
       if (Array.isArray(cfg.motivosCancelacion) && cfg.motivosCancelacion.length) {
         motivosCancelacion = cfg.motivosCancelacion.slice();
       }
+      if (cfg.cap_b17) capBolsa.b17 = parseFloat(cfg.cap_b17);
+      if (cfg.cap_b3)  capBolsa.b3  = parseFloat(cfg.cap_b3);
+      if (cfg.cap_b6)  capBolsa.b6  = parseFloat(cfg.cap_b6);
+      if (cfg.cap_b12) capBolsa.b12 = parseFloat(cfg.cap_b12);
     }
     calcularStockCamara();
 
@@ -1914,12 +1938,10 @@ async function doLogin() {
   currentUser = { nombre: u.nombre, rol: u.rol, id: u.vendedorId || '', emoji: u.nombre.slice(0,2).toUpperCase() };
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('userBtn').textContent = currentUser.emoji;
-  var esAdm = currentUser.rol && currentUser.rol.toLowerCase() === 'admin';
-  var elU = document.getElementById('item-usuarios'); if (elU) elU.style.display = esAdm ? 'flex' : 'none';
-  var elL = document.getElementById('item-listas'); if (elL) elL.style.display = esAdm ? 'flex' : 'none';
-  var elLiq = document.getElementById('item-liquidacion'); if (elLiq) elLiq.style.display = esAdm ? 'flex' : 'none';
-  var elRep = document.getElementById('item-reportes'); if (elRep) elRep.style.display = esAdm ? 'flex' : 'none';
-  initApp();
+  renderBottomNav();
+  renderMasMenu();
+  await initApp();
+  navTo(mainTabs[0]);
 }
 
 function showUserMenu() {
@@ -3197,19 +3219,45 @@ function imprimirRecibo() { window.print(); }
 
 // ── RENDER PRODUCCIÓN ──
 function renderProduccion() {
-  var prodHoy = turnos.filter(t=>esHoy(t.fecha)).reduce((a,t)=>a+t.kg,0);
-  document.getElementById('prod-hoy-kg').textContent = prodHoy;
-  document.getElementById('prod-hoy-turnos').textContent = turnos.filter(t=>esHoy(t.fecha)).length;
-  if (turnos.length === 0) {
-    document.getElementById('prod-lista').innerHTML = '<div class="empty"><div class="empty-icon">🏭</div><div class="empty-text">Sin turnos registrados</div></div>';
+  var terminadas = turnos.filter(function(t){ return t.estado !== 'en_curso'; });
+  var prodHoy = terminadas.filter(t=>esHoy(t.fecha)).reduce((a,t)=>a+t.kg,0);
+  document.getElementById('prod-hoy-kg').textContent = Math.round(prodHoy*10)/10;
+  document.getElementById('prod-hoy-turnos').textContent = terminadas.filter(t=>esHoy(t.fecha)).length;
+
+  // Tarjetas de las dos rolíteras (libre / en proceso).
+  var cards = ROLITERAS.map(function(r){
+    var maq=r[0], nombre=r[1], gas=r[2], ico=r[3];
+    var enc = turnos.find(function(t){ return t.maquina===maq && t.estado==='en_curso'; });
+    if (enc) {
+      var start = enc.fecha + 'T' + enc.inicio + ':00';
+      return '<div class="card" style="padding:16px;border:2px solid var(--accent)">'
+        + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:26px">'+ico+'</span>'
+        + '<div><div style="font-weight:700">'+nombre+'</div><div style="font-size:12px;color:var(--text2)">'+gas+' · N°'+enc.numero+' · '+enc.turno+'</div></div></div>'
+        + '<div style="text-align:center;margin:10px 0"><div style="font-size:32px;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums" class="crono" data-start="'+start+'">00:00:00</div>'
+        + '<div style="font-size:12px;color:var(--text3)">en proceso · '+getNomVendedor(enc.operario)+' · desde '+enc.inicio+'</div></div>'
+        + '<button class="btn btn-primary btn-block" onclick="abrirFinalizarMaquinada(\''+enc.id+'\')">Finalizar maquinada</button>'
+        + '</div>';
+    }
+    return '<div class="card" style="padding:16px">'
+      + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><span style="font-size:26px">'+ico+'</span>'
+      + '<div><div style="font-weight:700">'+nombre+'</div><div style="font-size:12px;color:var(--text2)">'+gas+' · libre</div></div></div>'
+      + '<button class="btn btn-primary btn-block" onclick="iniciarMaquinada(\''+maq+'\')">Iniciar</button>'
+      + '</div>';
+  }).join('');
+  document.getElementById('prod-rolideras').innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' + cards + '</div>';
+  tickCronometros();
+
+  // Historial (solo terminadas).
+  if (terminadas.length === 0) {
+    document.getElementById('prod-lista').innerHTML = '<div class="empty"><div class="empty-icon">🏭</div><div class="empty-text">Sin maquinadas registradas</div></div>';
     return;
   }
-  document.getElementById('prod-lista').innerHTML = turnos.slice().reverse().map(t => `
+  document.getElementById('prod-lista').innerHTML = terminadas.slice().reverse().map(t => `
     <div class="list-item">
       <div class="list-avatar">${t.maquina === 'R1' ? '🟦' : '🟢'}</div>
       <div class="list-info">
-        <div class="list-name">${getNomVendedor(t.operario)} · ${t.maquina === 'R1' ? 'Rolítera 1' : 'Rolítera 2'}</div>
-        <div class="list-sub">${t.inicio}–${t.fin} · ${bolsasLabel(t)}</div>
+        <div class="list-name">${t.maquina === 'R1' ? 'Rolítera 1' : 'Rolítera 2'}${t.numero ? ' · N°'+t.numero : ''}${t.turno ? ' · '+t.turno : ''}</div>
+        <div class="list-sub">${getNomVendedor(t.operario)} · ${t.inicio}${t.fin?'–'+t.fin:''} · ${bolsasLabel(t)}</div>
       </div>
       <div class="list-right">
         <div class="list-amount">${t.kg} kg</div>
@@ -3356,6 +3404,20 @@ function renderConfig() {
     <div style="margin-top:12px;padding:10px;background:var(--ice);border-radius:10px;font-size:12px;color:var(--text2)">
       Estos son los precios PV1 (fábrica → vendedor). El PV2 lo registra el vendedor al cargar cada venta.
     </div>`;
+  var capCont = document.getElementById('config-capacidad');
+  if (capCont) {
+    capCont.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      ${[{k:'b17',l:'Mini'},{k:'b3',l:'Chica'},{k:'b6',l:'Mediana'},{k:'b12',l:'Grande'}].map(t=>`
+      <div>
+        <label class="form-label">${t.l} (kg)</label>
+        <input class="form-input" type="number" step="0.1" value="${capBolsa[t.k]}" onchange="capBolsa['${t.k}']=+this.value" min="0">
+      </div>`).join('')}
+    </div>
+    <div style="margin-top:12px;padding:10px;background:var(--ice);border-radius:10px;font-size:12px;color:var(--text2)">
+      Con estos kg se calcula solo el total de cada maquinada (bolsas × kg del formato).
+    </div>`;
+  }
 }
 
 // ── COBRADO SELECTOR ──
@@ -3419,25 +3481,6 @@ function registrarMerma() {
   closeModal('modal-merma');
   showToast('Merma registrada');
   renderStock(); renderDashboard();
-}
-
-function registrarTurno() {
-  var operario = document.getElementById('t-operario').value;
-  var maquina = document.getElementById('t-maquina').value;
-  var inicio = document.getElementById('t-inicio').value;
-  var fin = document.getElementById('t-fin').value;
-  var kg = parseInt(document.getElementById('t-kg').value)||0;
-  var b17 = parseInt(document.getElementById('t-b17').value)||0;
-  var b3 = parseInt(document.getElementById('t-b3').value)||0;
-  var b6 = parseInt(document.getElementById('t-b6').value)||0;
-  var b12 = parseInt(document.getElementById('t-b12').value)||0;
-  if (kg === 0) { showToast('Ingresá los kg producidos','⚠️'); return; }
-  turnos.push({ fecha:hoy(), operario, maquina, inicio, fin, kg, b17, b3, b6, b12 });
-  stockCamara.b17 += b17; stockCamara.b3 += b3; stockCamara.b6 += b6; stockCamara.b12 += b12;
-  closeModal('modal-turno');
-  showToast('Turno registrado');
-  renderProduccion(); renderDashboard(); renderStock();
-  ['t-b17','t-b3','t-b6','t-b12','t-kg'].forEach(id=>document.getElementById(id).value='0');
 }
 
 function registrarCliente() {
@@ -3515,17 +3558,80 @@ registrarMerma = async function() {
   if (res.ok) { closeModal('modal-merma'); showToast('Merma guardada ✓'); await sincronizarDatos(); }
 };
 
-registrarTurno = async function() {
+// ── MAQUINADA (producción — proceso vivo) ───────────────────────
+var ROLITERAS = [['R1','Rolítera 1','Amoníaco','🟦'],['R2','Rolítera 2','Freón','🟢']];
+
+function leerBolsasMaquinada() {
+  return {
+    b17: parseInt(document.getElementById('t-b17').value)||0,
+    b3:  parseInt(document.getElementById('t-b3').value)||0,
+    b6:  parseInt(document.getElementById('t-b6').value)||0,
+    b12: parseInt(document.getElementById('t-b12').value)||0
+  };
+}
+function kgMaquinada(b) {
+  return (b.b17||0)*capBolsa.b17 + (b.b3||0)*capBolsa.b3 + (b.b6||0)*capBolsa.b6 + (b.b12||0)*capBolsa.b12;
+}
+function calcKgMaquinada() {
+  var kg = kgMaquinada(leerBolsasMaquinada());
+  document.getElementById('t-kg-calc').textContent = (Math.round(kg*10)/10) + ' kg';
+}
+function turnoPorHora() { return (new Date().getHours() < 13) ? 'mañana' : 'tarde'; }
+
+// Inicia una maquinada: graba el arranque en la base (proceso vivo).
+async function iniciarMaquinada(maq) {
+  if (turnos.some(function(t){ return t.maquina === maq && t.estado === 'en_curso'; })) {
+    showToast('Esa rolítera ya tiene una maquinada en curso','⚠️'); return;
+  }
+  var numero = turnos.filter(function(t){ return t.fecha === hoy() && t.maquina === maq; }).length + 1;
   var res = await fbAdd('turnos', {
-    fecha:hoy(), operario:document.getElementById('t-operario').value,
-    maquina:document.getElementById('t-maquina').value,
-    hsInicio:document.getElementById('t-inicio').value, hsFin:document.getElementById('t-fin').value,
-    kgProducidos:parseInt(document.getElementById('t-kg').value)||0,
-    bolsas17:parseInt(document.getElementById('t-b17').value)||0, bolsas3:parseInt(document.getElementById('t-b3').value)||0,
-    bolsas6:parseInt(document.getElementById('t-b6').value)||0, bolsas12:parseInt(document.getElementById('t-b12').value)||0
+    estado:'en_curso', maquina:maq, operario:(currentUser&&currentUser.id)||'',
+    turno:turnoPorHora(), numero:numero,
+    fecha:hoy(), hsInicio:ahora(), hsFin:'', kgProducidos:0,
+    bolsas17:0, bolsas3:0, bolsas6:0, bolsas12:0
   });
-  if (res.ok) { closeModal('modal-turno'); showToast('Turno guardado ✓'); await sincronizarDatos(); ['t-b17','t-b3','t-b6','t-b12','t-kg'].forEach(function(id){document.getElementById(id).value='0';}); }
-};
+  if (res.ok) { showToast('Maquinada iniciada ✓'); await sincronizarDatos(); renderProduccion(); }
+}
+
+function abrirFinalizarMaquinada(id) {
+  var t = turnos.find(function(x){ return x.id === id; });
+  if (!t) return;
+  var info = ROLITERAS.find(function(r){ return r[0] === t.maquina; });
+  document.getElementById('t-id').value = id;
+  document.getElementById('t-resumen').textContent = (info?info[1]+' ('+info[2]+')':t.maquina) + ' · N°' + t.numero + ' · ' + t.turno + ' · desde ' + t.inicio;
+  ['t-b17','t-b3','t-b6','t-b12'].forEach(function(x){ document.getElementById(x).value = '0'; });
+  calcKgMaquinada();
+  openModal('modal-turno');
+}
+
+async function finalizarMaquinada() {
+  var id = document.getElementById('t-id').value;
+  var t = turnos.find(function(x){ return x.id === id; });
+  if (!t) return;
+  var b = leerBolsasMaquinada();
+  if (b.b17+b.b3+b.b6+b.b12 === 0) { showToast('Cargá al menos una bolsa','⚠️'); return; }
+  var res = await fbUpdate('turnos', id, {
+    estado:'terminada', hsFin:ahora(), fechaFin:hoy(),
+    bolsas17:b.b17, bolsas3:b.b3, bolsas6:b.b6, bolsas12:b.b12,
+    kgProducidos:Math.round(kgMaquinada(b)*10)/10
+  });
+  if (!res.ok) return;
+  closeModal('modal-turno');
+  showToast('Maquinada cerrada ✓');
+  await sincronizarDatos();
+  renderProduccion();
+}
+
+// Cronómetro en vivo de las maquinadas en curso.
+function tickCronometros() {
+  document.querySelectorAll('.crono').forEach(function(el){
+    var s = el.getAttribute('data-start'); if (!s) return;
+    var d = Date.now() - new Date(s).getTime(); if (d < 0) d = 0;
+    var h=Math.floor(d/3600000), m=Math.floor((d%3600000)/60000), sec=Math.floor((d%60000)/1000);
+    el.textContent = String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
+  });
+}
+setInterval(tickCronometros, 1000);
 
 registrarCliente = async function() {
   var nombre = document.getElementById('c-nombre').value.trim();
@@ -3554,7 +3660,8 @@ guardarConfig = async function() {
   try {
     setSyncStatus('loading');
     await db.collection('config').doc('app').set({
-      precio_b17:precios.b17, precio_b3:precios.b3, precio_b6:precios.b6, precio_b12:precios.b12
+      precio_b17:precios.b17, precio_b3:precios.b3, precio_b6:precios.b6, precio_b12:precios.b12,
+      cap_b17:capBolsa.b17, cap_b3:capBolsa.b3, cap_b6:capBolsa.b6, cap_b12:capBolsa.b12
     }, { merge:true });
     setSyncStatus('ok');
     showToast('Configuración guardada');
