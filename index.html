@@ -621,6 +621,11 @@
         <div class="list-info"><div class="list-name">Listas de precios</div><div class="list-sub">PV2 y % de fábrica por lista</div></div>
         <div style="color:var(--text3);font-size:18px">›</div>
       </div>
+      <div id="item-liquidacion" class="list-item" onclick="navTo('liquidacion')" style="cursor:pointer;display:none">
+        <div class="list-avatar">💰</div>
+        <div class="list-info"><div class="list-name">Liquidación</div><div class="list-sub">Cuenta y recibos por vendedor</div></div>
+        <div style="color:var(--text3);font-size:18px">›</div>
+      </div>
       <div class="list-item" onclick="navTo('config')" style="cursor:pointer">
         <div class="list-avatar">⚙️</div>
         <div class="list-info"><div class="list-name">Configuración</div><div class="list-sub">Precios y máquinas</div></div>
@@ -815,6 +820,17 @@
     </div>
     <div class="card">
       <button class="btn btn-primary btn-block" onclick="abrirNuevaLista()">+ Nueva lista</button>
+    </div>
+  </div>
+
+  <div class="subpage pt-safe" id="screen-liquidacion">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <button onclick="navBack()" style="background:var(--card);border:none;border-radius:10px;padding:8px 12px;font-size:16px;cursor:pointer;box-shadow:var(--shadow)">←</button>
+      <div class="section-title" style="margin:0">Liquidación 💰</div>
+    </div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:10px">Lo que cada vendedor le debe a la fábrica (PV1 de sus pedidos preparados y entregados), menos lo que ya pagó.</div>
+    <div class="card" style="padding:0 14px">
+      <div id="liq-lista"></div>
     </div>
   </div>
 
@@ -1235,6 +1251,58 @@
   </div>
 </div>
 
+<!-- Modal: Liquidación de un vendedor -->
+<div class="modal-overlay" id="modal-liq-vend" onclick="overlayClose(event,'modal-liq-vend')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="liqv-nombre">Vendedor</div>
+    <div class="modal-body">
+      <input type="hidden" id="liqv-id">
+      <div class="card" style="padding:12px;background:var(--ice)">
+        <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px"><span style="color:var(--text2)">Adeuda a fábrica</span><span id="liqv-adeudado" style="font-weight:600">$0</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px"><span style="color:var(--text2)">Ya pagó</span><span id="liqv-pagado" style="font-weight:600">$0</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:16px;border-top:1px solid var(--border);padding-top:8px;margin-top:2px"><span style="font-weight:600">Saldo</span><span id="liqv-saldo" style="font-weight:700;color:var(--accent)">$0</span></div>
+      </div>
+      <button class="btn btn-primary btn-block" style="margin-top:12px" onclick="abrirRegistrarPago()">Registrar pago</button>
+      <div style="font-weight:600;font-size:14px;margin:16px 0 8px">Pedidos que suman</div>
+      <div id="liqv-pedidos"></div>
+      <div style="font-weight:600;font-size:14px;margin:16px 0 8px">Recibos emitidos</div>
+      <div id="liqv-recibos"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Registrar pago -->
+<div class="modal-overlay" id="modal-pago" onclick="overlayClose(event,'modal-pago')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Registrar pago</div>
+    <div class="modal-body">
+      <input type="hidden" id="pago-vid">
+      <div id="pago-resumen" style="font-size:14px;color:var(--text2);margin-bottom:10px"></div>
+      <div class="form-group">
+        <label class="form-label">Monto que entrega</label>
+        <input class="form-input" type="number" min="0" id="pago-monto">
+        <div style="font-size:12px;color:var(--text2);margin-top:2px">Puede ser el total del saldo o un pago parcial.</div>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="guardarPago()">Confirmar y generar recibo</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Recibo -->
+<div class="modal-overlay" id="modal-recibo" onclick="overlayClose(event,'modal-recibo')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Recibo</div>
+    <div class="modal-body">
+      <div id="recibo-cont" style="border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center"></div>
+      <button class="btn btn-primary btn-block" style="margin-top:12px" onclick="imprimirRecibo()">Imprimir</button>
+      <button class="btn btn-block" style="background:var(--ice);color:var(--text);margin-top:8px" onclick="closeModal('modal-recibo')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal: Lista de precios -->
 <div class="modal-overlay" id="modal-lista" onclick="overlayClose(event,'modal-lista')">
   <div class="modal-sheet">
@@ -1456,7 +1524,7 @@
 // ── NAVIGATION ───────────────────────────────────────────────────
 var carouselIdx = 0;
 var mainTabs = ['dashboard', 'stock', 'pedidos', 'clientes', 'mas'];
-var subPages = ['produccion', 'vendedores', 'reportes', 'heladeras', 'config', 'usuarios', 'listas'];
+var subPages = ['produccion', 'vendedores', 'reportes', 'heladeras', 'config', 'usuarios', 'listas', 'liquidacion'];
 var currentTabIdx = 0;
 var carouselIdx = 0;
 
@@ -1488,7 +1556,7 @@ function navTo(screen) {
     if (screen === 'clientes') renderClientes('');
   } else {
     // Candado: pantallas solo para admin.
-    if ((screen === 'listas' || screen === 'usuarios') && !(currentUser && currentUser.rol && currentUser.rol.toLowerCase() === 'admin')) {
+    if ((screen === 'listas' || screen === 'usuarios' || screen === 'liquidacion') && !(currentUser && currentUser.rol && currentUser.rol.toLowerCase() === 'admin')) {
       showToast('Solo disponible para el administrador','🔒');
       navTo('mas');
       return;
@@ -1503,6 +1571,7 @@ function navTo(screen) {
     if (screen === 'config') renderConfig();
     if (screen === 'usuarios') renderUsuariosScreen();
     if (screen === 'listas') renderListas();
+    if (screen === 'liquidacion') renderLiquidacion();
   }
 }
 
@@ -1548,6 +1617,8 @@ var stockCamara = { b17: 150, b3: 80, b6: 45, b12: 20 };
 var motivosCancelacion = ['Cliente canceló', 'No hay stock', 'Error de carga', 'Problema de pago', 'Otro'];
 // Listas de precios (Modelo B): cada lista tiene nombre, % de fábrica y PV2 por tipo de bolsa.
 var listasPrecios = [];
+// Recibos de liquidación (pagos de los vendedores a la fábrica).
+var recibos = [];
 
 // ── DATA CLIENT (Firestore) ─────────────────────────────────────
 // Sentinel truthy: mantiene los caminos "con backend" y saltea el modo demo local.
@@ -1672,9 +1743,9 @@ async function sincronizarDatos() {
     var res = await Promise.all([
       fbGetAll('vendedores'), fbGetAll('clientes'), fbGetAll('heladeras'),
       fbGetAll('turnos'), fbGetAll('retiros'), fbGetAll('mermas'), fbGetAll('ventas'), fbGetAll('pedidos'),
-      fbGetAll('listas_precios')
+      fbGetAll('listas_precios'), fbGetAll('recibos')
     ]);
-    var vends=res[0], clis=res[1], hels=res[2], turnsData=res[3], retsData=res[4], mermsData=res[5], ventsData=res[6], pedsData=res[7], listasData=res[8];
+    var vends=res[0], clis=res[1], hels=res[2], turnsData=res[3], retsData=res[4], mermsData=res[5], ventsData=res[6], pedsData=res[7], listasData=res[8], recibosData=res[9];
     var cfgDoc = await db.collection('config').doc('app').get();
     var cfg = cfgDoc.exists ? cfgDoc.data() : null;
 
@@ -1686,6 +1757,9 @@ async function sincronizarDatos() {
       return { id:l.id, nombre:l.nombre||'(sin nombre)', pct:parseFloat(l.pctFabrica)||0,
         pv2:{ b17:parseFloat(l.pv2_b17)||0, b3:parseFloat(l.pv2_b3)||0, b6:parseFloat(l.pv2_b6)||0, b12:parseFloat(l.pv2_b12)||0 },
         pred: l.predeterminada === true };
+    });
+    recibos = recibosData.map(function(r){
+      return { id:r.id, numero:parseInt(r.numero)||0, vendedorId:r.vendedorId||'', vendedorNombre:r.vendedorNombre||'', monto:parseFloat(r.monto)||0, fecha:r.fecha||'', hora:r.hora||'', emitidoPor:r.emitidoPor||'' };
     });
     heladeras = hels.map(function(h){ return { id:h.id, modelo:h.modelo, cliente:h.clienteId||'', estado:h.estado, cap:h.capacidad||0 }; });
     turnos = turnsData.map(function(t){ return { id:t.id, fecha:t.fecha, operario:t.operario, maquina:t.maquina, inicio:t.hsInicio, fin:t.hsFin, kg:t.kgProducidos||0, b17:t.bolsas17||0, b3:t.bolsas3||0, b6:t.bolsas6||0, b12:t.bolsas12||0 }; });
@@ -1716,6 +1790,7 @@ async function sincronizarDatos() {
     if (document.getElementById('prod-lista')) renderProduccion();
     renderClientes('');
     if (document.getElementById('screen-listas') && document.getElementById('screen-listas').classList.contains('active')) renderListas();
+    if (document.getElementById('screen-liquidacion') && document.getElementById('screen-liquidacion').classList.contains('active')) renderLiquidacion();
     setSyncStatus('ok');
   } catch(e) {
     setSyncStatus('err');
@@ -1831,6 +1906,7 @@ async function doLogin() {
   var esAdm = currentUser.rol && currentUser.rol.toLowerCase() === 'admin';
   var elU = document.getElementById('item-usuarios'); if (elU) elU.style.display = esAdm ? 'flex' : 'none';
   var elL = document.getElementById('item-listas'); if (elL) elL.style.display = esAdm ? 'flex' : 'none';
+  var elLiq = document.getElementById('item-liquidacion'); if (elLiq) elLiq.style.display = esAdm ? 'flex' : 'none';
   initApp();
 }
 
@@ -2974,6 +3050,115 @@ async function borrarLista() {
   await sincronizarDatos();
   renderListas();
 }
+
+// ── LIQUIDACIÓN POR VENDEDOR (Etapa 3) ──────────────────────────
+var liqVendActual = '';
+
+// Cuenta de un vendedor: adeuda (PV1 de preparados+entregados) − pagado (recibos).
+function liqVendedor(vid) {
+  var adeudado = 0;
+  pedidos.forEach(function(p){ if (p.vendedor === vid && (p.estado === 'preparado' || p.estado === 'entregado')) adeudado += p.aFabrica || 0; });
+  var pagado = 0;
+  recibos.forEach(function(r){ if (r.vendedorId === vid) pagado += r.monto || 0; });
+  return { adeudado: adeudado, pagado: pagado, saldo: adeudado - pagado };
+}
+
+function renderLiquidacion() {
+  var cont = document.getElementById('liq-lista');
+  if (!cont) return;
+  var rows = vendedores.map(function(v){
+    var l = liqVendedor(v.id);
+    if (l.adeudado === 0 && l.pagado === 0) return '';
+    var color = l.saldo > 0 ? 'var(--red)' : 'var(--green)';
+    return '<div class="list-item" onclick="abrirLiquidacionVendedor(\'' + v.id + '\')" style="cursor:pointer">'
+      + '<div class="list-avatar">' + v.nombre.slice(0,1).toUpperCase() + '</div>'
+      + '<div class="list-info"><div class="list-name">' + v.nombre + '</div>'
+      + '<div class="list-sub">Adeuda ' + fmtMoneda(l.adeudado) + ' · Pagó ' + fmtMoneda(l.pagado) + '</div></div>'
+      + '<div style="text-align:right"><div style="font-weight:700;color:' + color + '">' + fmtMoneda(l.saldo) + '</div><div style="font-size:11px;color:var(--text3)">saldo</div></div>'
+      + '</div>';
+  }).filter(Boolean).join('');
+  cont.innerHTML = rows || '<div class="empty" style="padding:24px 0"><div class="empty-icon">💰</div><div class="empty-text">Sin movimientos</div></div>';
+}
+
+function abrirLiquidacionVendedor(vid) {
+  var v = vendedores.find(function(x){ return x.id === vid; });
+  if (!v) return;
+  liqVendActual = vid;
+  var l = liqVendedor(vid);
+  document.getElementById('liqv-id').value = vid;
+  document.getElementById('liqv-nombre').textContent = v.nombre;
+  document.getElementById('liqv-adeudado').textContent = fmtMoneda(l.adeudado);
+  document.getElementById('liqv-pagado').textContent = fmtMoneda(l.pagado);
+  document.getElementById('liqv-saldo').textContent = fmtMoneda(l.saldo);
+  // Pedidos que suman.
+  var peds = pedidos.filter(function(p){ return p.vendedor === vid && (p.estado === 'preparado' || p.estado === 'entregado'); });
+  var pedHtml = peds.length ? peds.map(function(p){
+    return '<div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px solid var(--border)">'
+      + '<span>' + getNomCliente(p.cliente) + ' · ' + bolsasLabel(p) + ' <span style="color:var(--text3)">(' + p.estado + (p.pago?', '+p.pago:'') + ')</span></span>'
+      + '<span style="font-weight:600">' + fmtMoneda(p.aFabrica||0) + '</span></div>';
+  }).join('') : '<div style="font-size:13px;color:var(--text3)">Sin pedidos</div>';
+  document.getElementById('liqv-pedidos').innerHTML = pedHtml;
+  // Recibos.
+  var recs = recibos.filter(function(r){ return r.vendedorId === vid; }).sort(function(a,b){ return b.numero - a.numero; });
+  var recHtml = recs.length ? recs.map(function(r){
+    return '<div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px solid var(--border)">'
+      + '<span>Recibo N° ' + String(r.numero).padStart(4,'0') + ' · ' + r.fecha + '</span>'
+      + '<span style="font-weight:600;color:var(--green)">' + fmtMoneda(r.monto) + '</span></div>';
+  }).join('') : '<div style="font-size:13px;color:var(--text3)">Sin recibos</div>';
+  document.getElementById('liqv-recibos').innerHTML = recHtml;
+  openModal('modal-liq-vend');
+}
+
+function abrirRegistrarPago() {
+  var vid = document.getElementById('liqv-id').value;
+  var v = vendedores.find(function(x){ return x.id === vid; });
+  if (!v) return;
+  var l = liqVendedor(vid);
+  document.getElementById('pago-vid').value = vid;
+  document.getElementById('pago-resumen').textContent = v.nombre + ' · saldo actual ' + fmtMoneda(l.saldo);
+  document.getElementById('pago-monto').value = l.saldo > 0 ? l.saldo : 0;
+  closeModal('modal-liq-vend');
+  openModal('modal-pago');
+}
+
+function proximoNumeroRecibo() {
+  var m = 0;
+  recibos.forEach(function(r){ if ((r.numero||0) > m) m = r.numero; });
+  return m + 1;
+}
+
+async function guardarPago() {
+  var vid = document.getElementById('pago-vid').value;
+  var v = vendedores.find(function(x){ return x.id === vid; });
+  if (!v) return;
+  var monto = parseFloat(document.getElementById('pago-monto').value)||0;
+  if (monto <= 0) { showToast('Ingresá un monto','⚠️'); return; }
+  var numero = proximoNumeroRecibo();
+  var res = await fbAdd('recibos', {
+    numero: numero, vendedorId: vid, vendedorNombre: v.nombre,
+    monto: monto, fecha: hoy(), hora: ahora(),
+    emitidoPor: (currentUser && currentUser.nombre) || ''
+  });
+  if (!res.ok) return;
+  closeModal('modal-pago');
+  showToast('Pago registrado ✓');
+  await sincronizarDatos();
+  renderLiquidacion();
+  mostrarRecibo({ numero:numero, vendedorNombre:v.nombre, monto:monto, fecha:hoy(), hora:ahora(), emitidoPor:(currentUser&&currentUser.nombre)||'' });
+}
+
+function mostrarRecibo(r) {
+  document.getElementById('recibo-cont').innerHTML =
+    '<div style="font-size:13px;color:var(--text2)">Cristalito — Recibo</div>'
+    + '<div style="font-size:26px;font-weight:700;margin:6px 0">N° ' + String(r.numero).padStart(4,'0') + '</div>'
+    + '<div style="font-size:28px;font-weight:700;color:var(--accent);margin:8px 0">' + fmtMoneda(r.monto) + '</div>'
+    + '<div style="font-size:14px;margin-top:8px">Recibí de <b>' + r.vendedorNombre + '</b></div>'
+    + '<div style="font-size:13px;color:var(--text2);margin-top:4px">' + r.fecha + ' ' + r.hora + '</div>'
+    + '<div style="font-size:12px;color:var(--text3);margin-top:8px">Emitió: ' + r.emitidoPor + '</div>';
+  openModal('modal-recibo');
+}
+
+function imprimirRecibo() { window.print(); }
 
 // ── RENDER PRODUCCIÓN ──
 function renderProduccion() {
