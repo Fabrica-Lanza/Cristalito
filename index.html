@@ -606,7 +606,7 @@
         <div class="list-info"><div class="list-name">Vendedores</div><div class="list-sub">Ranking, liquidación, clientes</div></div>
         <div style="color:var(--text3);font-size:18px">›</div>
       </div>
-      <div class="list-item" onclick="navTo('reportes')" style="cursor:pointer">
+      <div id="item-reportes" class="list-item" onclick="navTo('reportes')" style="cursor:pointer;display:none">
         <div class="list-avatar">📊</div>
         <div class="list-info"><div class="list-name">Reportes</div><div class="list-sub">Producción, ventas, rentabilidad</div></div>
         <div style="color:var(--text3);font-size:18px">›</div>
@@ -715,6 +715,7 @@
     </div>
 
     <div class="chip-group" style="margin-bottom:14px" id="reporte-periodo">
+      <div class="chip" onclick="cambiarPeriodo('hoy', this)">Hoy</div>
       <div class="chip selected" onclick="cambiarPeriodo('semana', this)">Esta semana</div>
       <div class="chip" onclick="cambiarPeriodo('mes', this)">Este mes</div>
       <div class="chip" onclick="cambiarPeriodo('todo', this)">Todo</div>
@@ -722,9 +723,14 @@
 
     <div class="metric-grid">
       <div class="metric-card accent">
-        <div class="metric-label">Ventas período</div>
-        <div class="metric-value" id="rep-ventas">$0</div>
-        <div class="metric-sub" id="rep-ventas-cant">0 operaciones</div>
+        <div class="metric-label">Facturación (PV2)</div>
+        <div class="metric-value" id="rep-fact">$0</div>
+        <div class="metric-sub" id="rep-pedidos">0 pedidos</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">A fábrica (PV1)</div>
+        <div class="metric-value" id="rep-pv1">$0</div>
+        <div class="metric-sub" id="rep-bolsas">0 bolsas</div>
       </div>
       <div class="metric-card">
         <div class="metric-label">Producción</div>
@@ -732,14 +738,14 @@
         <div class="metric-sub">kg producidos</div>
       </div>
       <div class="metric-card">
-        <div class="metric-label">Retiros</div>
-        <div class="metric-value" id="rep-retiros">0</div>
-        <div class="metric-sub">bolsas retiradas</div>
-      </div>
-      <div class="metric-card">
         <div class="metric-label">Mermas</div>
         <div class="metric-value" id="rep-mermas">0</div>
         <div class="metric-sub">bolsas perdidas</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Tiempo promedio</div>
+        <div class="metric-value" id="rep-tiempo">—</div>
+        <div class="metric-sub">de tomado a entregado</div>
       </div>
     </div>
 
@@ -1561,7 +1567,7 @@ function navTo(screen) {
     if (screen === 'clientes') renderClientes('');
   } else {
     // Candado: pantallas solo para admin.
-    if ((screen === 'listas' || screen === 'usuarios' || screen === 'liquidacion') && !(currentUser && currentUser.rol && currentUser.rol.toLowerCase() === 'admin')) {
+    if ((screen === 'listas' || screen === 'usuarios' || screen === 'liquidacion' || screen === 'reportes') && !(currentUser && currentUser.rol && currentUser.rol.toLowerCase() === 'admin')) {
       showToast('Solo disponible para el administrador','🔒');
       navTo('mas');
       return;
@@ -1912,6 +1918,7 @@ async function doLogin() {
   var elU = document.getElementById('item-usuarios'); if (elU) elU.style.display = esAdm ? 'flex' : 'none';
   var elL = document.getElementById('item-listas'); if (elL) elL.style.display = esAdm ? 'flex' : 'none';
   var elLiq = document.getElementById('item-liquidacion'); if (elLiq) elLiq.style.display = esAdm ? 'flex' : 'none';
+  var elRep = document.getElementById('item-reportes'); if (elRep) elRep.style.display = esAdm ? 'flex' : 'none';
   initApp();
 }
 
@@ -3243,53 +3250,77 @@ function cambiarPeriodo(p, el) {
   periodo = p;
   renderReportes(p);
 }
+function enPeriodoRep(fecha, p) {
+  if (!fecha) return false;
+  if (p === 'hoy') return fecha === hoy();
+  if (p === 'semana') return esSemana(fecha);
+  if (p === 'mes') { var d=new Date(fecha+'T12:00:00'); var n=new Date(); return d.getMonth()===n.getMonth() && d.getFullYear()===n.getFullYear(); }
+  return true; // todo
+}
+
+function minutosProcesoPedido(p) {
+  if (!p.fechaTomado || !p.horaTomado || !p.fechaEntregado || !p.horaEntregado) return null;
+  var ini = new Date(p.fechaTomado+'T'+p.horaTomado+':00'), fin = new Date(p.fechaEntregado+'T'+p.horaEntregado+':00');
+  var m = Math.round((fin-ini)/60000);
+  return (isNaN(m) || m<0) ? null : m;
+}
+function fmtMin(m) {
+  if (m == null) return '—';
+  var d=Math.floor(m/1440), h=Math.floor((m%1440)/60), mm=m%60, parts=[];
+  if (d>0) parts.push(d+'d');
+  if (h>0) parts.push(h+'h');
+  parts.push(mm+'m');
+  return parts.join(' ');
+}
+
 function renderReportes(p) {
-  var filt = (arr, campo='fecha') => arr.filter(x => {
-    if (p==='semana') return esSemana(x[campo]);
-    if (p==='mes') { var d=new Date(x[campo]+'T12:00:00'); var n=new Date(); return d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear(); }
-    return true;
-  });
-  var ventFilt = filt(ventas);
-  var prodFilt = filt(turnos);
-  var retFilt = filt(retiros);
-  var merFilt = filt(mermas);
-  var totalVent = ventFilt.reduce((a,v)=>a+(v.pv2||0),0);
-  var totalProd = prodFilt.reduce((a,t)=>a+t.kg,0);
-  var totalRet = retFilt.reduce((a,r)=>a+totalBolsas(r),0);
-  var totalMer = merFilt.reduce((a,m)=>a+m.cant,0);
-  document.getElementById('rep-ventas').textContent = fmtMoneda(totalVent);
-  document.getElementById('rep-ventas-cant').textContent = ventFilt.length + ' operaciones';
+  // Ventas = pedidos ENTREGADOS del período (por fechaEntregado).
+  var ent = pedidos.filter(function(x){ return x.estado === 'entregado' && enPeriodoRep(x.fechaEntregado, p); });
+  var prodFilt = turnos.filter(function(x){ return enPeriodoRep(x.fecha, p); });
+  var merFilt = mermas.filter(function(x){ return enPeriodoRep(x.fecha, p); });
+
+  var totalPV2 = ent.reduce(function(a,x){ return a+(x.sugerido||0); }, 0);
+  var totalPV1 = ent.reduce(function(a,x){ return a+(x.aFabrica||0); }, 0);
+  var totalBols = ent.reduce(function(a,x){ return a+totalBolsas(x); }, 0);
+  var totalProd = prodFilt.reduce(function(a,t){ return a+(t.kg||0); }, 0);
+  var totalMer = merFilt.reduce(function(a,m){ return a+(m.cant||0); }, 0);
+  var mins = ent.map(minutosProcesoPedido).filter(function(m){ return m != null; });
+  var prom = mins.length ? Math.round(mins.reduce(function(a,b){ return a+b; },0)/mins.length) : null;
+
+  document.getElementById('rep-fact').textContent = fmtMoneda(totalPV2);
+  document.getElementById('rep-pedidos').textContent = ent.length + ' pedidos';
+  document.getElementById('rep-pv1').textContent = fmtMoneda(totalPV1);
+  document.getElementById('rep-bolsas').textContent = totalBols + ' bolsas';
   document.getElementById('rep-prod').textContent = totalProd;
-  document.getElementById('rep-retiros').textContent = totalRet;
   document.getElementById('rep-mermas').textContent = totalMer;
-  // Por vendedor
+  document.getElementById('rep-tiempo').textContent = fmtMin(prom);
+
+  // Por vendedor (facturación PV2, por quién tomó el pedido).
   var porVend = {};
-  vendedores.forEach(v=>{ porVend[v.id]={cant:0,monto:0}; });
-  ventFilt.forEach(v=>{ if(v.vendedor in porVend){ porVend[v.vendedor].cant++; porVend[v.vendedor].monto+=(v.pv2||0); } });
-  var sorted = Object.entries(porVend).sort((a,b)=>b[1].monto-a[1].monto);
+  vendedores.forEach(function(v){ porVend[v.id] = {cant:0, monto:0}; });
+  ent.forEach(function(x){ if (x.vendedor in porVend){ porVend[x.vendedor].cant++; porVend[x.vendedor].monto += (x.sugerido||0); } });
+  var sorted = Object.entries(porVend).sort(function(a,b){ return b[1].monto - a[1].monto; });
   var maxM = (sorted[0] && sorted[0][1] ? sorted[0][1].monto : 0) || 1;
-  document.getElementById('rep-por-vendedor').innerHTML = sorted.filter(e=>e[1].monto>0).map(([id,data]) => `
-    <div style="margin-bottom:12px">
-      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-        <span style="font-size:13px;font-weight:600;color:var(--text)">${getNomVendedor(id)}</span>
-        <span style="font-size:13px;font-weight:700;color:var(--accent);font-family:'JetBrains Mono',monospace">${fmtMoneda(data.monto)} (${data.cant} ventas)</span>
-      </div>
-      <div class="progress-wrap"><div class="progress-fill" style="width:${data.monto/maxM*100}%"></div></div>
-    </div>`).join('') || '<div class="empty"><div class="empty-icon">📊</div><div class="empty-text">Sin datos</div></div>';
-  // Top clientes
+  document.getElementById('rep-por-vendedor').innerHTML = sorted.filter(function(e){ return e[1].monto>0; }).map(function(e){
+    var id=e[0], data=e[1];
+    return '<div style="margin-bottom:12px">'
+      + '<div style="display:flex;justify-content:space-between;margin-bottom:4px">'
+      + '<span style="font-size:13px;font-weight:600;color:var(--text)">'+getNomVendedor(id)+'</span>'
+      + '<span style="font-size:13px;font-weight:700;color:var(--accent)">'+fmtMoneda(data.monto)+' ('+data.cant+')</span>'
+      + '</div><div class="progress-wrap"><div class="progress-fill" style="width:'+(data.monto/maxM*100)+'%"></div></div></div>';
+  }).join('') || '<div class="empty"><div class="empty-icon">📊</div><div class="empty-text">Sin datos</div></div>';
+
+  // Top clientes (facturación PV2).
   var porCli = {};
-  clientes.forEach(c=>{ porCli[c.id]={nombre:c.nombre,monto:0,cant:0}; });
-  ventFilt.forEach(v=>{ if(v.cliente in porCli){ porCli[v.cliente].monto+=(v.pv2||0); porCli[v.cliente].cant++; } });
-  var sortedCli = Object.entries(porCli).sort((a,b)=>b[1].monto-a[1].monto).filter(e=>e[1].monto>0).slice(0,5);
-  document.getElementById('rep-top-clientes').innerHTML = sortedCli.map(([id,data],i) => `
-    <div class="list-item">
-      <div class="list-avatar" style="font-size:14px;font-weight:700;color:var(--accent);background:var(--ice)">${i+1}</div>
-      <div class="list-info">
-        <div class="list-name">${data.nombre}</div>
-        <div class="list-sub">${data.cant} compras</div>
-      </div>
-      <div class="list-right"><div class="list-amount">${fmtMoneda(data.monto)}</div></div>
-    </div>`).join('') || '<div class="empty"><div class="empty-icon">🏆</div><div class="empty-text">Sin datos</div></div>';
+  clientes.forEach(function(c){ porCli[c.id] = {nombre:c.nombre, monto:0, cant:0}; });
+  ent.forEach(function(x){ if (x.cliente in porCli){ porCli[x.cliente].monto += (x.sugerido||0); porCli[x.cliente].cant++; } });
+  var sortedCli = Object.entries(porCli).sort(function(a,b){ return b[1].monto - a[1].monto; }).filter(function(e){ return e[1].monto>0; }).slice(0,5);
+  document.getElementById('rep-top-clientes').innerHTML = sortedCli.map(function(e,i){
+    var data=e[1];
+    return '<div class="list-item"><div class="list-avatar" style="font-size:14px;font-weight:700;color:var(--accent);background:var(--ice)">'+(i+1)+'</div>'
+      + '<div class="list-info"><div class="list-name">'+data.nombre+'</div><div class="list-sub">'+data.cant+' pedidos</div></div>'
+      + '<div class="list-right"><div class="list-amount">'+fmtMoneda(data.monto)+'</div></div></div>';
+  }).join('') || '<div class="empty"><div class="empty-icon">🏆</div><div class="empty-text">Sin datos</div></div>';
 }
 
 // ── RENDER HELADERAS ──
