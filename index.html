@@ -558,6 +558,10 @@
         <input type="date" class="form-input" id="pedidos-fecha" style="width:auto;padding:6px 10px" onchange="cambiarFechaPedidos(this.value)">
         <button class="chip" onclick="cambiarFechaPedidos('')">Hoy</button>
       </div>
+      <div id="pedidos-vendedor-box" style="display:none;align-items:center;gap:8px;margin-top:10px">
+        <span style="font-size:13px;color:var(--text2)">Vendedor:</span>
+        <select class="form-input" id="pedidos-vendedor" style="width:auto;padding:6px 10px" onchange="cambiarVendedorPedidos(this.value)"></select>
+      </div>
     </div>
 
     <div class="card">
@@ -1980,10 +1984,14 @@ function populateSelects() {
     if (el) el.innerHTML = vOpts;
   });
   var cOpts = clientes.filter(c => c.activo).map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+  // Al tomar un pedido, el vendedor solo elige clientes de su cartera; Cecilia, todos.
+  var miId = currentUser ? currentUser.id : '';
+  var cOptsPedido = clientes.filter(c => c.activo && (esAdmin() || c.vendedor === miId)).map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
   ['v-cliente','r-cliente','h-cliente','p-cliente'].forEach(id => {
     var el = document.getElementById(id);
     if (el) {
       if (id === 'r-cliente') el.innerHTML = '<option value="">Sin cliente específico</option>' + cOpts;
+      else if (id === 'p-cliente') el.innerHTML = cOptsPedido;
       else el.innerHTML = cOpts;
     }
   });
@@ -2280,6 +2288,17 @@ async function marcarCobrado(id) {
 // ── PEDIDOS (paso 1: tomar) ──────────────────────────────────────
 var pedidosFiltroActual = 'pendiente';
 var pedidosFecha = ''; // '' = hoy; si no, una fecha ISO para ver historial de entregados/cancelados
+var pedidosVendedorFiltro = ''; // solo Cecilia: '' = todos, o un id de vendedor
+
+// ¿El cliente del pedido es de la cartera de ese vendedor?
+function clienteEsDe(clienteId, vid) { var c = clientes.find(function(x){ return x.id === clienteId; }); return !!(c && c.vendedor === vid); }
+// Un vendedor ve un pedido si: el cliente es suyo, O él lo tomó, O está asignado a él.
+function puedeVerPedido(p, vid) { return clienteEsDe(p.cliente, vid) || p.vendedor === vid || p.asignado === vid; }
+// Alcance según quién mira (admin: todos o el vendedor del selector; vendedor: solo lo suyo).
+function pedidoEnAlcance(p) {
+  if (esAdmin()) return !pedidosVendedorFiltro || puedeVerPedido(p, pedidosVendedorFiltro);
+  return puedeVerPedido(p, currentUser ? currentUser.id : '');
+}
 var expandedPedido = null;
 var entCobrado = 'si';
 
@@ -2309,6 +2328,22 @@ function cambiarFechaPedidos(v) {
   renderPedidos(pedidosFiltroActual);
 }
 
+// Selector de vendedor (solo Cecilia): se combina con los chips de estado.
+function prepararSelectorVendedorPedidos() {
+  var box = document.getElementById('pedidos-vendedor-box');
+  if (!box) return;
+  if (!esAdmin()) { box.style.display = 'none'; return; }
+  box.style.display = 'flex';
+  var sel = document.getElementById('pedidos-vendedor');
+  var opts = '<option value="">Todos</option>' + vendedores.map(function(v){ return '<option value="'+v.id+'">'+v.nombre+'</option>'; }).join('');
+  sel.innerHTML = opts;
+  sel.value = pedidosVendedorFiltro;
+}
+function cambiarVendedorPedidos(v) {
+  pedidosVendedorFiltro = v || '';
+  renderPedidos(pedidosFiltroActual);
+}
+
 // Salta al filtro de un estado y selecciona su chip (para ver el pedido en su nuevo estado).
 function irFiltroPedidos(estado) {
   var target = null;
@@ -2328,9 +2363,11 @@ function estadoBadge(estado) {
 function renderPedidos(filtro) {
   var lista = document.getElementById('pedidos-lista');
   if (!lista) return;
+  prepararSelectorVendedorPedidos();
   var fecha = pedidosFecha || hoy();
   // Pendientes y preparados siempre; entregados y cancelados solo del día elegido.
   var filt = pedidos.slice().reverse().filter(function(p){
+    if (!pedidoEnAlcance(p)) return false;
     if (filtro === 'pendiente' || filtro === 'preparado') return p.estado === filtro;
     if (filtro === 'entregado') return p.estado === 'entregado' && p.fechaEntregado === fecha;
     if (filtro === 'cancelado') return p.estado === 'cancelado' && p.fechaCancelado === fecha;
@@ -2342,10 +2379,10 @@ function renderPedidos(filtro) {
     return false;
   });
 
-  var aLiquidar = pedidos.filter(function(p){ return p.cobrado !== 'si' && (p.estado === 'preparado' || p.estado === 'entregado'); })
+  var aLiquidar = pedidos.filter(function(p){ return pedidoEnAlcance(p) && p.cobrado !== 'si' && (p.estado === 'preparado' || p.estado === 'entregado'); })
     .reduce(function(a,p){ return a + (p.aFabrica||0); }, 0);
   var elA = document.getElementById('ped-afabrica'); if (elA) elA.textContent = fmtMoneda(aLiquidar);
-  var elP = document.getElementById('ped-pendientes'); if (elP) elP.textContent = pedidos.filter(function(p){return p.estado==='pendiente';}).length;
+  var elP = document.getElementById('ped-pendientes'); if (elP) elP.textContent = pedidos.filter(function(p){return pedidoEnAlcance(p) && p.estado==='pendiente';}).length;
 
   if (filt.length === 0) {
     lista.innerHTML = '<div class="empty"><div class="empty-icon">' + icon('receipt', 44) + '</div><div class="empty-text">Sin pedidos en este estado</div></div>';
@@ -2828,7 +2865,7 @@ function setFiltroClientes(activos, el) {
 function filtrarClientes(q) { renderClientes(q); }
 
 function renderClientes(q) {
-  var canVerTodos = !currentUser || currentUser.rol === 'admin';
+  var canVerTodos = !currentUser || esAdmin();
   var lista = clientes.filter(c => {
     if (c.activo !== clientesVerActivos) return false;
     if (!canVerTodos && currentUser.id) {
@@ -3373,7 +3410,13 @@ function renderReportes(p) {
 
 // ── RENDER HELADERAS ──
 function renderHeladeras() {
-  document.getElementById('heladeras-lista').innerHTML = heladeras.map(h => {
+  var miId = currentUser ? currentUser.id : '';
+  var lista = heladeras.filter(function(h){
+    if (esAdmin()) return true;
+    var cl = clientes.find(function(c){ return c.id === h.cliente; });
+    return !!(cl && cl.vendedor === miId);
+  });
+  document.getElementById('heladeras-lista').innerHTML = lista.map(h => {
     var cl = clientes.find(c=>c.id===h.cliente);
     var capLabel = h.modelo==='Tipo 150'?'35 bolsas 3kg':h.modelo==='Tipo 300'?'90 bolsas 3kg':'8 bolsas 12kg';
     return `<div class="list-item">
