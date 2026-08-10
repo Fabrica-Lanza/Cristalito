@@ -590,7 +590,7 @@
       <div id="clientes-lista"></div>
     </div>
 
-    <button class="fab" onclick="openModal('modal-cliente')">+</button>
+    <button class="fab" onclick="abrirNuevoCliente()">+</button>
   </div>
 
   <!-- ── MI CUENTA (vendedor) ── -->
@@ -1188,6 +1188,7 @@
         <div class="form-group">
           <label class="form-label">Vendedor asignado</label>
           <select class="form-input" id="c-vendedor"></select>
+          <div id="c-vend-nota" style="font-size:12px;color:var(--text2);margin-top:2px"></div>
         </div>
       </div>
       <div class="form-group">
@@ -3676,14 +3677,31 @@ function tickCronometros() {
 }
 setInterval(tickCronometros, 1000);
 
+// Al abrir "Nuevo cliente": si lo crea un vendedor, el vendedor queda fijo en él.
+function abrirNuevoCliente() {
+  var sel = document.getElementById('c-vendedor');
+  var nota = document.getElementById('c-vend-nota');
+  if (esAdmin()) {
+    sel.disabled = false; sel.style.background = '';
+    if (nota) nota.textContent = '';
+  } else {
+    sel.value = currentUser ? currentUser.id : '';
+    sel.disabled = true; sel.style.background = 'var(--ice)';
+    if (nota) nota.textContent = 'El cliente queda en tu cartera. Solo Cecilia puede asignarlo a otro.';
+  }
+  openModal('modal-cliente');
+}
+
 registrarCliente = async function() {
   var nombre = document.getElementById('c-nombre').value.trim();
   if (!nombre) { showToast('Ingresá el nombre','⚠️'); return; }
+  // Un vendedor solo puede asignarse el cliente a sí mismo; Cecilia elige.
+  var vendedorId = esAdmin() ? document.getElementById('c-vendedor').value : (currentUser ? currentUser.id : '');
   var res = await fbAdd('clientes', {
     nombre:nombre, tipo:document.getElementById('c-tipo').value,
     direccion:document.getElementById('c-dir').value,
     distancia:parseFloat(document.getElementById('c-dist').value)||0,
-    vendedorId:document.getElementById('c-vendedor').value,
+    vendedorId:vendedorId,
     formaPago:document.getElementById('c-pago').value, activo:true
   });
   if (res.ok) { closeModal('modal-cliente'); showToast('Cliente guardado ✓'); await sincronizarDatos(); document.getElementById('c-nombre').value=''; document.getElementById('c-dir').value=''; document.getElementById('c-dist').value=''; }
