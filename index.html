@@ -946,21 +946,21 @@
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Mini 1.7kg</label>
-          <input class="form-input" type="number" min="0" value="0" id="p-b17" oninput="calcTotalesPedido()">
+          <input class="form-input numpad" inputmode="none" type="number" min="0" value="0" id="p-b17" oninput="calcTotalesPedido()">
         </div>
         <div class="form-group">
           <label class="form-label">Chica 3kg</label>
-          <input class="form-input" type="number" min="0" value="0" id="p-b3" oninput="calcTotalesPedido()">
+          <input class="form-input numpad" inputmode="none" type="number" min="0" value="0" id="p-b3" oninput="calcTotalesPedido()">
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Mediana 6kg</label>
-          <input class="form-input" type="number" min="0" value="0" id="p-b6" oninput="calcTotalesPedido()">
+          <input class="form-input numpad" inputmode="none" type="number" min="0" value="0" id="p-b6" oninput="calcTotalesPedido()">
         </div>
         <div class="form-group">
           <label class="form-label">Grande 12kg</label>
-          <input class="form-input" type="number" min="0" value="0" id="p-b12" oninput="calcTotalesPedido()">
+          <input class="form-input numpad" inputmode="none" type="number" min="0" value="0" id="p-b12" oninput="calcTotalesPedido()">
         </div>
       </div>
       <div id="p-stock-aviso" style="margin-top:4px"></div>
@@ -985,21 +985,21 @@
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Mini 1.7kg</label>
-          <input class="form-input" type="number" min="0" value="0" id="e-b17" oninput="calcTotalesEditar()">
+          <input class="form-input numpad" inputmode="none" type="number" min="0" value="0" id="e-b17" oninput="calcTotalesEditar()">
         </div>
         <div class="form-group">
           <label class="form-label">Chica 3kg</label>
-          <input class="form-input" type="number" min="0" value="0" id="e-b3" oninput="calcTotalesEditar()">
+          <input class="form-input numpad" inputmode="none" type="number" min="0" value="0" id="e-b3" oninput="calcTotalesEditar()">
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Mediana 6kg</label>
-          <input class="form-input" type="number" min="0" value="0" id="e-b6" oninput="calcTotalesEditar()">
+          <input class="form-input numpad" inputmode="none" type="number" min="0" value="0" id="e-b6" oninput="calcTotalesEditar()">
         </div>
         <div class="form-group">
           <label class="form-label">Grande 12kg</label>
-          <input class="form-input" type="number" min="0" value="0" id="e-b12" oninput="calcTotalesEditar()">
+          <input class="form-input numpad" inputmode="none" type="number" min="0" value="0" id="e-b12" oninput="calcTotalesEditar()">
         </div>
       </div>
       <div id="e-stock-aviso" style="margin-top:4px"></div>
@@ -1135,21 +1135,21 @@
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Mini 1.7kg</label>
-          <input class="form-input" type="number" min="0" value="0" id="t-b17" oninput="calcKgMaquinada()">
+          <input class="form-input numpad" inputmode="none" type="number" min="0" value="0" id="t-b17" oninput="calcKgMaquinada()">
         </div>
         <div class="form-group">
           <label class="form-label">Chica 3kg</label>
-          <input class="form-input" type="number" min="0" value="0" id="t-b3" oninput="calcKgMaquinada()">
+          <input class="form-input numpad" inputmode="none" type="number" min="0" value="0" id="t-b3" oninput="calcKgMaquinada()">
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Mediana 6kg</label>
-          <input class="form-input" type="number" min="0" value="0" id="t-b6" oninput="calcKgMaquinada()">
+          <input class="form-input numpad" inputmode="none" type="number" min="0" value="0" id="t-b6" oninput="calcKgMaquinada()">
         </div>
         <div class="form-group">
           <label class="form-label">Grande 12kg</label>
-          <input class="form-input" type="number" min="0" value="0" id="t-b12" oninput="calcKgMaquinada()">
+          <input class="form-input numpad" inputmode="none" type="number" min="0" value="0" id="t-b12" oninput="calcKgMaquinada()">
         </div>
       </div>
       <div class="card" style="padding:12px;margin-top:4px;background:var(--ice)">
@@ -2549,7 +2549,7 @@ function computeTotalesPedido(bolsas, unit, pct) {
 
 function _grpPU(prefix, k, label, val) {
   return '<div class="form-group"><label class="form-label">'+label+'</label>'
-    + '<input class="form-input" type="number" min="0" id="'+prefix+'-pu-'+k+'" value="'+val+'" oninput="recalcPrecios(\''+prefix+'\')"></div>';
+    + '<input class="form-input numpad" inputmode="none" type="number" min="0" id="'+prefix+'-pu-'+k+'" value="'+val+'" oninput="recalcPrecios(\''+prefix+'\')"></div>';
 }
 function _row2(l, v) {
   return '<div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px"><span style="color:var(--text2)">'+l+'</span>'+v+'</div>';
@@ -2790,7 +2790,7 @@ function abrirCancelarPedido(id) {
       return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +
         '<div style="flex:1;font-size:14px">' + t[1] + ' <span style="color:var(--text2)">(' + total + ')</span></div>' +
         '<label style="font-size:12px;color:var(--text2)">Rotas</label>' +
-        '<input class="form-input" style="width:70px" type="number" min="0" max="' + total + '" value="0" id="x-rota-' + t[0] + '" data-total="' + total + '">' +
+        '<input class="form-input numpad" inputmode="none" style="width:70px" type="number" min="0" max="' + total + '" value="0" id="x-rota-' + t[0] + '" data-total="' + total + '">' +
       '</div>';
     }).join('');
     box.innerHTML =
@@ -3676,6 +3676,55 @@ function tickCronometros() {
   });
 }
 setInterval(tickCronometros, 1000);
+
+// ── TECLADO NUMÉRICO PROPIO (campos .numpad) ────────────────────
+(function(){
+  var style = document.createElement('style');
+  style.textContent =
+    '.numpad-active{background:#E8F1FF !important;box-shadow:0 0 0 2px var(--accent) inset;}'
+    + '#numpad-el{position:fixed;left:0;right:0;bottom:0;z-index:99999;background:var(--card);border-top:1px solid var(--border);box-shadow:0 -6px 24px rgba(0,0,0,.15);padding:10px calc(10px + env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));display:none;}'
+    + '#numpad-el .np-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:460px;margin:0 auto;}'
+    + '#numpad-el button{font-size:22px;font-weight:600;padding:16px 0;border:none;border-radius:12px;background:var(--ice);color:var(--text);cursor:pointer;}'
+    + '#numpad-el button:active{background:var(--border);}'
+    + '#numpad-el .np-done{grid-column:1 / 4;background:var(--accent);color:#fff;margin-top:2px;}';
+  document.head.appendChild(style);
+
+  var el = document.createElement('div');
+  el.id = 'numpad-el';
+  var keys = ['1','2','3','4','5','6','7','8','9','clr','0','del'];
+  var html = '<div class="np-grid">';
+  keys.forEach(function(k){ html += '<button data-k="'+k+'">' + (k==='del'?'⌫':k==='clr'?'C':k) + '</button>'; });
+  html += '<button class="np-done" data-k="done">Listo</button></div>';
+  el.innerHTML = html;
+  document.body.appendChild(el);
+
+  var target = null;
+  function show(t){ if (target && target !== t) target.classList.remove('numpad-active'); target = t; t.classList.add('numpad-active'); el.style.display = 'block'; }
+  function hide(){ if (target) target.classList.remove('numpad-active'); target = null; el.style.display = 'none'; }
+
+  // Abrir el teclado al tocar/enfocar un campo .numpad.
+  function esNumpad(t){ return t && t.classList && t.classList.contains('numpad'); }
+  document.addEventListener('focusin', function(e){ if (esNumpad(e.target)) show(e.target); });
+  document.addEventListener('pointerdown', function(e){
+    if (esNumpad(e.target)) { show(e.target); return; }
+    // Tocar fuera del teclado y de un campo numpad: cerrar.
+    if (target && !(e.target.closest && e.target.closest('#numpad-el'))) hide();
+  });
+
+  // Evitar que tocar el teclado le saque el foco al campo (mouse y táctil).
+  el.addEventListener('mousedown', function(e){ e.preventDefault(); });
+  el.addEventListener('touchstart', function(e){ e.preventDefault(); }, { passive:false });
+
+  el.addEventListener('click', function(e){
+    var b = e.target.closest('button'); if (!b || !target) return;
+    var k = b.getAttribute('data-k');
+    if (k === 'done') { hide(); return; }
+    if (k === 'del') target.value = String(target.value).slice(0,-1);
+    else if (k === 'clr') target.value = '';
+    else target.value = (String(target.value) === '0' ? '' : String(target.value)) + k;
+    target.dispatchEvent(new Event('input', { bubbles:true }));
+  });
+})();
 
 // Al abrir "Nuevo cliente": si lo crea un vendedor, el vendedor queda fijo en él.
 function abrirNuevoCliente() {
