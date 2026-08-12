@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cristalito-v59
+const CACHE_NAME = 'cristalito-v60
 ';
 const urlsToCache = ['/Cristalito/', '/Cristalito/index.html', '/Cristalito/manifest.json'];
 
