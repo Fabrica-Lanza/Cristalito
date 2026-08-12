@@ -1103,10 +1103,12 @@
 <div class="modal-overlay" id="modal-rolitera" onclick="overlayClose(event,'modal-rolitera')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title" id="rol-titulo">Rolítera</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px">
+      <div class="modal-title" id="rol-titulo" style="margin:0">Rolítera</div>
+      <button onclick="closeModal('modal-rolitera')" style="background:var(--ice);border:none;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer;color:var(--text2)">✕</button>
+    </div>
     <div class="modal-body">
       <div id="rol-hist"></div>
-      <button class="btn btn-block" style="background:var(--ice);color:var(--text);margin-top:16px" onclick="closeModal('modal-rolitera')">Volver a las rolíteras</button>
     </div>
   </div>
 </div>
@@ -3273,26 +3275,47 @@ function renderProduccion() {
   tickCronometros();
 }
 
-// Historial de una rolítera: por fecha (desc) y dentro del día por N° (desc).
+// Historial de una rolítera: hoy desplegado; días anteriores colapsados (se tocan para abrir).
+var rolAbierta = { maq:'', dias:{} };
 function abrirRolitera(maq) {
   var info = ROLITERAS.find(function(r){ return r[0]===maq; });
   document.getElementById('rol-titulo').textContent = (info?info[1]+' ('+info[2]+')':maq);
+  if (rolAbierta.maq !== maq) rolAbierta = { maq:maq, dias:{} };
+  renderRolHist(maq);
+  openModal('modal-rolitera');
+}
+function toggleDiaRol(fecha) {
+  rolAbierta.dias[fecha] = !rolAbierta.dias[fecha];
+  renderRolHist(rolAbierta.maq);
+}
+function renderRolHist(maq) {
   var hist = turnos.filter(function(t){ return t.maquina===maq && t.estado!=='en_curso'; })
     .sort(function(a,b){ if (a.fecha!==b.fecha) return a.fecha<b.fecha?1:-1; return (b.numero||0)-(a.numero||0); });
   var cont = document.getElementById('rol-hist');
-  if (!hist.length) { cont.innerHTML = '<div class="empty" style="padding:24px 0"><div class="empty-icon">🏭</div><div class="empty-text">Sin maquinadas</div></div>'; openModal('modal-rolitera'); return; }
-  var html = '', fechaActual = '';
-  hist.forEach(function(t){
-    if (t.fecha !== fechaActual) { fechaActual = t.fecha; html += '<div style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin:14px 0 6px">'+fmtFecha(t.fecha)+'</div>'; }
-    html += '<div class="list-item" onclick="abrirVerMaquinada(\''+t.id+'\')" style="cursor:pointer">'
-      + '<div class="list-avatar" style="font-weight:700;color:var(--accent);background:var(--ice)">'+(t.numero||'–')+'</div>'
-      + '<div class="list-info"><div class="list-name">Maquinada N°'+(t.numero||'–')+' · '+(t.turno||'')+'</div>'
-      + '<div class="list-sub">'+getNomVendedor(t.operario)+' · '+t.inicio+(t.fin?'–'+t.fin:'')+' · '+bolsasLabel(t)+'</div></div>'
-      + '<div class="list-right"><div class="list-amount">'+t.kg+' kg</div><div style="font-size:11px;color:var(--text3)">tocar para editar</div></div>'
+  if (!hist.length) { cont.innerHTML = '<div class="empty" style="padding:24px 0"><div class="empty-icon">🏭</div><div class="empty-text">Sin maquinadas</div></div>'; return; }
+  // Agrupar por fecha, en orden.
+  var grupos = [], idx = {};
+  hist.forEach(function(t){ if (!(t.fecha in idx)) { idx[t.fecha] = grupos.length; grupos.push({ fecha:t.fecha, items:[] }); } grupos[idx[t.fecha]].items.push(t); });
+  var html = '';
+  grupos.forEach(function(g){
+    var esHoyG = g.fecha === hoy();
+    var abierto = esHoyG || rolAbierta.dias[g.fecha];
+    html += '<div onclick="toggleDiaRol(\''+g.fecha+'\')" style="display:flex;justify-content:space-between;align-items:center;cursor:'+(esHoyG?'default':'pointer')+';margin:14px 0 6px">'
+      + '<div style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em">'+fmtFecha(g.fecha)+(esHoyG?' · hoy':'')+'</div>'
+      + (esHoyG ? '' : '<div style="color:var(--text3);font-size:13px">'+(abierto?'▲':'▼')+'</div>')
       + '</div>';
+    if (abierto) {
+      g.items.forEach(function(t){
+        html += '<div class="list-item" onclick="abrirVerMaquinada(\''+t.id+'\')" style="cursor:pointer">'
+          + '<div class="list-avatar" style="font-weight:700;color:var(--accent);background:var(--ice)">'+(t.numero||'–')+'</div>'
+          + '<div class="list-info"><div class="list-name">Maquinada N°'+(t.numero||'–')+' · '+(t.turno||'')+'</div>'
+          + '<div class="list-sub">'+getNomVendedor(t.operario)+' · '+t.inicio+(t.fin?'–'+t.fin:'')+' · '+bolsasLabel(t)+'</div></div>'
+          + '<div class="list-right"><div class="list-amount">'+t.kg+' kg</div><div style="font-size:11px;color:var(--text3)">tocar para ver</div></div>'
+          + '</div>';
+      });
+    }
   });
   cont.innerHTML = html;
-  openModal('modal-rolitera');
 }
 
 // ── RENDER VENDEDORES ──
