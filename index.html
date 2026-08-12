@@ -3677,71 +3677,64 @@ function tickCronometros() {
 }
 setInterval(tickCronometros, 1000);
 
-// ── TECLADO NUMÉRICO PROPIO (campos .numpad, readonly) ──────────
+// ── TECLADO NUMÉRICO ENFOCADO (Opción A) — campos .numpad, readonly ──
 (function(){
   var style = document.createElement('style');
   style.textContent =
-    '.numpad-active{background:#E8F1FF !important;box-shadow:0 0 0 2px var(--accent) inset;}'
-    + '#numpad-el{position:fixed;left:0;right:0;bottom:0;z-index:99999;background:var(--card);border-top:1px solid var(--border);box-shadow:0 -6px 24px rgba(0,0,0,.15);padding:10px calc(10px + env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));display:none;}'
-    + '#numpad-el .np-head{max-width:440px;margin:0 auto 8px;display:flex;justify-content:space-between;align-items:baseline;padding:0 4px;font-size:14px;color:var(--text2);}'
-    + '#numpad-el .np-head b{color:var(--accent);font-size:22px;font-weight:700;}'
-    + '#numpad-el .np-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;max-width:440px;margin:0 auto;}'
-    + '#numpad-el button{font-size:20px;font-weight:600;padding:12px 0;border:none;border-radius:11px;background:var(--ice);color:var(--text);cursor:pointer;}'
-    + '#numpad-el button:active{background:var(--border);}'
-    + '#numpad-el .np-done{grid-column:1 / 4;background:var(--accent);color:#fff;padding:13px 0;}'
-    + 'body.numpad-open .modal-sheet{padding-bottom:340px;}';
+    '#npf{position:fixed;inset:0;z-index:100000;background:rgba(13,22,32,.55);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .26s;}'
+    + '#npf.on{opacity:1;pointer-events:auto;}'
+    + '#npf .npf-top{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;gap:6px;padding:20px;}'
+    + '#npf .npf-lbl{font-size:16px;opacity:.85;letter-spacing:.02em;}'
+    + '#npf .npf-big{font-size:78px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;}'
+    + '#npf .npf-unit{font-size:13px;opacity:.7;}'
+    + '#npf .npf-pad{background:var(--card);border-radius:24px 24px 0 0;padding:16px 14px calc(16px + env(safe-area-inset-bottom));}'
+    + '#npf .npf-keys{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:440px;margin:0 auto;}'
+    + '#npf .npf-keys button{font-size:22px;font-weight:600;padding:16px 0;border:none;border-radius:12px;background:var(--ice);color:var(--text);cursor:pointer;}'
+    + '#npf .npf-keys button:active{background:var(--border);}'
+    + '#npf .npf-keys .wide{grid-column:1 / 4;background:var(--accent);color:#fff;padding:15px 0;font-weight:700;}';
   document.head.appendChild(style);
 
-  var el = document.createElement('div');
-  el.id = 'numpad-el';
+  var ov = document.createElement('div');
+  ov.id = 'npf';
   var keys = ['1','2','3','4','5','6','7','8','9','clr','0','del'];
-  var html = '<div class="np-head"><span id="np-label">Cantidad</span><b id="np-val">0</b></div><div class="np-grid">';
-  keys.forEach(function(k){ html += '<button data-k="'+k+'">' + (k==='del'?'\u232B':k==='clr'?'C':k) + '</button>'; });
-  html += '<button class="np-done" data-k="done">Listo</button></div>';
-  el.innerHTML = html;
-  document.body.appendChild(el);
+  var kh = '';
+  keys.forEach(function(k){ kh += '<button data-k="'+k+'">' + (k==='del'?'\u232B':k==='clr'?'C':k) + '</button>'; });
+  kh += '<button class="wide" data-k="done">\u2713 Listo</button>';
+  ov.innerHTML = '<div class="npf-top"><div class="npf-lbl" id="npf-lbl">Cantidad</div><div class="npf-big" id="npf-big">0</div><div class="npf-unit" id="npf-unit">bolsas</div></div><div class="npf-pad"><div class="npf-keys">' + kh + '</div></div>';
+  document.body.appendChild(ov);
 
-  var target = null; // campo activo por REFERENCIA (no depende del foco)
+  var target = null, fresh = true;
   function labelDe(t){
     var g = t.closest('.form-group');
     if (g) { var l = g.querySelector('.form-label'); if (l) return l.textContent.trim(); }
-    var prev = t.previousElementSibling;
-    if (prev && prev.tagName === 'LABEL') return prev.textContent.trim();
+    var p = t.previousElementSibling;
+    if (p && p.tagName === 'LABEL') return p.textContent.trim();
     return 'Cantidad';
   }
-  function refresh(){ var v = document.getElementById('np-val'); if (v) v.textContent = (target && target.value !== '') ? target.value : '0'; }
-  function show(t){
-    if (target && target !== t) target.classList.remove('numpad-active');
-    target = t; t.classList.add('numpad-active');
-    var lab = document.getElementById('np-label'); if (lab) lab.textContent = labelDe(t);
-    refresh(); el.style.display = 'block';
-    // Sube el formulario para que el campo activo quede por encima del teclado.
-    document.body.classList.add('numpad-open');
-    var sheet = t.closest('.modal-sheet');
-    if (sheet) setTimeout(function(){
-      var r = t.getBoundingClientRect(), sr = sheet.getBoundingClientRect();
-      sheet.scrollTop += (r.top - sr.top) - 16;
-    }, 40);
-  }
-  function hide(){ if (target) target.classList.remove('numpad-active'); target = null; el.style.display = 'none'; document.body.classList.remove('numpad-open'); }
+  function unitDe(t){ var id = t.id || ''; if (id.indexOf('-pu-') !== -1) return 'precio por bolsa ($)'; if (id.indexOf('x-rota') !== -1) return 'bolsas rotas'; return 'bolsas'; }
+  function draw(){ document.getElementById('npf-big').textContent = (target && target.value !== '') ? target.value : '0'; }
+  function open(t){ target = t; fresh = true; document.getElementById('npf-lbl').textContent = labelDe(t); document.getElementById('npf-unit').textContent = unitDe(t); draw(); ov.classList.add('on'); }
+  function close(){ ov.classList.remove('on'); target = null; }
 
-  // Abrir al tocar un campo .numpad; cerrar al tocar fuera. Sin depender del foco.
+  // Tocar un campo .numpad abre la vista enfocada.
   document.addEventListener('pointerdown', function(e){
     var t = e.target.closest && e.target.closest('.numpad');
-    if (t) { e.preventDefault(); show(t); return; }
-    if (target && !(e.target.closest && e.target.closest('#numpad-el'))) hide();
+    if (t) { e.preventDefault(); open(t); }
   }, true);
-  el.addEventListener('pointerdown', function(e){ e.preventDefault(); }); // no roba foco ni scrollea
 
-  el.addEventListener('click', function(e){
+  ov.addEventListener('pointerdown', function(e){ e.preventDefault(); });
+  ov.addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b || !target) return;
     var k = b.getAttribute('data-k');
-    if (k === 'done') { hide(); return; }
-    if (k === 'del') target.value = String(target.value).slice(0,-1);
-    else if (k === 'clr') target.value = '';
-    else target.value = (String(target.value) === '0' ? '' : String(target.value)) + k;
+    if (k === 'done') { target.dispatchEvent(new Event('input', { bubbles:true })); close(); return; }
+    var cur = String(target.value);
+    if (k === 'del') cur = cur.slice(0,-1);
+    else if (k === 'clr') cur = '';
+    else { if (fresh) { cur = ''; fresh = false; } cur = (cur === '0' ? '' : cur) + k; }
+    fresh = false;
+    target.value = cur;
     target.dispatchEvent(new Event('input', { bubbles:true }));
-    refresh();
+    draw();
   });
 })();
 
