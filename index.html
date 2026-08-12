@@ -1106,6 +1106,7 @@
     <div class="modal-title" id="rol-titulo">Rolítera</div>
     <div class="modal-body">
       <div id="rol-hist"></div>
+      <button class="btn btn-block" style="background:var(--ice);color:var(--text);margin-top:16px" onclick="closeModal('modal-rolitera')">Volver a las rolíteras</button>
     </div>
   </div>
 </div>
@@ -1145,6 +1146,7 @@
         </div>
       </div>
       <button class="btn btn-primary btn-block" id="t-btn" style="margin-top:12px" onclick="btnMaquinada()">Confirmar y cerrar maquinada</button>
+      <button class="btn btn-block" id="t-volver" style="background:var(--ice);color:var(--text);margin-top:8px;display:none" onclick="volverMaquinada()">Volver</button>
     </div>
   </div>
 </div>
@@ -3254,16 +3256,16 @@ function renderProduccion() {
       + '<div style="color:var(--text3);font-size:20px">›</div></div>';
     if (enc) {
       var start = enc.fecha + 'T' + enc.inicio + ':00';
-      return '<div class="card" style="padding:22px 18px;border:2px solid var(--accent);margin-bottom:16px">'
+      return '<div class="card" style="padding:20px 18px;border:2px solid var(--accent);margin-bottom:14px">'
         + head
-        + '<div style="text-align:center;margin:14px 0 18px"><div style="font-size:52px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums;line-height:1" class="crono" data-start="'+start+'">00:00:00</div>'
-        + '<div style="font-size:12px;color:var(--text3);margin-top:8px">N°'+enc.numero+' · '+enc.turno+' · '+getNomVendedor(enc.operario)+' · desde '+enc.inicio+'</div></div>'
+        + '<div style="text-align:center;margin:16px 0 20px"><div style="font-size:46px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums;line-height:1" class="crono" data-start="'+start+'">00:00:00</div>'
+        + '<div style="font-size:12px;color:var(--text3);margin-top:10px">N°'+enc.numero+' · '+enc.turno+' · '+getNomVendedor(enc.operario)+' · desde '+enc.inicio+'</div></div>'
         + '<button class="btn btn-primary btn-block" style="padding:16px 0;font-size:16px" onclick="abrirFinalizarMaquinada(\''+enc.id+'\')">Finalizar maquinada</button>'
         + '</div>';
     }
-    return '<div class="card" style="padding:22px 18px;margin-bottom:16px">'
+    return '<div class="card" style="padding:24px 18px;margin-bottom:14px">'
       + head
-      + '<div style="text-align:center;color:var(--text3);font-size:13px;margin:10px 0 18px">Rolítera libre</div>'
+      + '<div style="text-align:center;color:var(--text3);font-size:14px;margin:20px 0 24px">Rolítera libre</div>'
       + '<button class="btn btn-primary btn-block" style="padding:16px 0;font-size:16px" onclick="iniciarMaquinada(\''+maq+'\')">Iniciar</button>'
       + '</div>';
   }).join('');
@@ -3643,6 +3645,7 @@ function abrirFinalizarMaquinada(id) {
   maqModo = 'finalizar';
   document.getElementById('t-titulo').textContent = 'Finalizar maquinada';
   document.getElementById('t-btn').textContent = 'Confirmar y cerrar maquinada';
+  document.getElementById('t-volver').style.display = 'none';
   document.getElementById('t-id').value = id;
   document.getElementById('t-resumen').textContent = (info?info[1]+' ('+info[2]+')':t.maquina) + ' · N°' + t.numero + ' · ' + t.turno + ' · desde ' + t.inicio;
   ['t-b17','t-b3','t-b6','t-b12'].forEach(function(x){ document.getElementById(x).value = '0'; });
@@ -3658,7 +3661,9 @@ function abrirVerMaquinada(id) {
   var info = ROLITERAS.find(function(r){ return r[0] === t.maquina; });
   maqModo = 'ver';
   document.getElementById('t-titulo').textContent = 'Maquinada N°' + (t.numero||'');
-  document.getElementById('t-btn').textContent = '✏️ Editar';
+  document.getElementById('t-btn').textContent = 'Editar';
+  document.getElementById('t-volver').textContent = 'Volver';
+  document.getElementById('t-volver').style.display = 'block';
   document.getElementById('t-id').value = id;
   document.getElementById('t-resumen').textContent = (info?info[1]+' ('+info[2]+')':t.maquina) + ' · N°' + t.numero + ' · ' + t.turno + ' · ' + fmtFecha(t.fecha);
   document.getElementById('t-b17').value = t.b17||0;
@@ -3676,7 +3681,17 @@ function habilitarEdicionMaquinada() {
   maqModo = 'editar';
   document.getElementById('t-titulo').textContent = 'Editar maquinada';
   document.getElementById('t-btn').textContent = 'Guardar cambios';
+  document.getElementById('t-volver').textContent = 'Cancelar';
+  document.getElementById('t-volver').style.display = 'block';
   habilitarCamposMaq(true);
+}
+
+// Volver/Cancelar: cierra la ficha y vuelve al historial de la rolítera.
+function volverMaquinada() {
+  var id = document.getElementById('t-id').value;
+  var t = turnos.find(function(x){ return x.id === id; });
+  closeModal('modal-turno');
+  if (t) abrirRolitera(t.maquina);
 }
 
 // El botón del modal actúa según el modo.
@@ -3699,9 +3714,11 @@ async function confirmarMaquinada() {
   var res = await fbUpdate('turnos', id, campos);
   if (!res.ok) return;
   closeModal('modal-turno');
+  var eraEdicion = (maqModo === 'editar');
   showToast(maqModo === 'finalizar' ? 'Maquinada cerrada ✓' : 'Maquinada actualizada ✓');
   await sincronizarDatos();
   renderProduccion();
+  if (eraEdicion) abrirRolitera(t.maquina);
 }
 
 // Cronómetro en vivo de las maquinadas en curso.
@@ -3739,7 +3756,7 @@ setInterval(tickCronometros, 1000);
   var keys = ['1','2','3','4','5','6','7','8','9','clr','0','del'];
   var kh = '';
   keys.forEach(function(k){ kh += '<button data-k="'+k+'">' + (k==='del'?'\u232B':k==='clr'?'C':k) + '</button>'; });
-  kh += '<button class="wide" data-k="done">\u2713 Listo</button>';
+  kh += '<button class="wide" data-k="done">Listo</button>';
   ov.innerHTML = '<div class="npf-top"><div class="npf-lbl" id="npf-lbl">Cantidad</div><div class="npf-big" id="npf-big">0</div><div class="npf-unit" id="npf-unit">bolsas</div></div><div class="npf-pad"><div class="npf-keys">' + kh + '</div></div>';
   document.body.appendChild(ov);
 
