@@ -413,11 +413,15 @@
         <div class="metric-value" id="dash-prod-hoy">0</div>
         <div class="metric-sub">kg producidos</div>
       </div>
-      <div class="metric-card">
-        <div class="metric-label">Retiros hoy</div>
-        <div class="metric-value" id="dash-retiros-hoy">0</div>
-        <div class="metric-sub">bolsas retiradas</div>
+    </div>
+
+    <!-- Estado del conteo de cámara -->
+    <div class="card" id="dash-conteo-card" style="display:none;cursor:pointer" onclick="navTo('stock')">
+      <div class="card-header">
+        <div class="card-title">Conteo de cámara</div>
+        <div class="card-action">Ir a stock →</div>
       </div>
+      <div id="dash-conteo-body"></div>
     </div>
 
     <!-- Stock por bolsa -->
@@ -455,26 +459,9 @@
     <div class="tab-panel pt-safe" id="screen-stock">
 
     <div class="section-title">Stock 📦</div>
+    <div id="stock-ultimo-conteo" style="font-size:12px;color:var(--text3);margin:-4px 0 12px"></div>
 
-    <div class="metric-grid">
-      <div class="metric-card accent">
-        <div class="metric-label">Total bolsas</div>
-        <div class="metric-value" id="stock-total-bolsas">0</div>
-        <div class="metric-sub">en cámara</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">Total kg</div>
-        <div class="metric-value" id="stock-total-kg">0</div>
-        <div class="metric-sub">estimados</div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">Por tipo de bolsa</div>
-      </div>
-      <div id="stock-detalle"></div>
-    </div>
+    <div class="metric-grid" id="stock-detalle"></div>
 
     <div class="card">
       <div class="card-header">
@@ -486,7 +473,7 @@
       </div>
     </div>
 
-    <button class="fab" onclick="openModal('modal-retiro')">+</button>
+    <button class="fab" id="stock-fab" onclick="abrirConteo()" title="Conteo de cámara">📋</button>
   </div>
 
   <!-- ── VENTAS ── -->
@@ -637,6 +624,7 @@
     <div style="font-size:13px;color:var(--text2);margin-bottom:14px">Tocá una rolítera para ver su historial de maquinadas.</div>
 
     <div id="prod-rolideras"></div>
+    <div id="prod-trizado"></div>
   </div>
 
   <!-- ── VENDEDORES ── -->
@@ -701,6 +689,11 @@
         <div class="metric-sub">bolsas perdidas</div>
       </div>
       <div class="metric-card">
+        <div class="metric-label">Trizado embolsado</div>
+        <div class="metric-value" id="rep-trizado">0</div>
+        <div class="metric-sub">bolsas</div>
+      </div>
+      <div class="metric-card">
         <div class="metric-label">Tiempo promedio</div>
         <div class="metric-value" id="rep-tiempo">—</div>
         <div class="metric-sub">de tomado a entregado</div>
@@ -715,6 +708,11 @@
     <div class="card">
       <div class="card-header"><div class="card-title">Top clientes</div></div>
       <div id="rep-top-clientes"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div class="card-title">Diferencias de conteo</div></div>
+      <div id="rep-conteo"></div>
     </div>
   </div>
 
@@ -746,6 +744,11 @@
     <div class="card">
       <div class="card-header"><div class="card-title">Precios actuales (PV1)</div></div>
       <div id="config-precios"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div class="card-title">Precio público (venta directa)</div></div>
+      <div id="config-publico"></div>
     </div>
 
     <div class="card">
@@ -935,8 +938,18 @@
           <input class="form-input numpad" inputmode="none" readonly type="number" min="0" value="0" id="p-b6" oninput="calcTotalesPedido()">
         </div>
         <div class="form-group">
+          <label class="form-label">Med. trizada 6kg</label>
+          <input class="form-input numpad" inputmode="none" readonly type="number" min="0" value="0" id="p-b6t" oninput="calcTotalesPedido()">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
           <label class="form-label">Grande 12kg</label>
           <input class="form-input numpad" inputmode="none" readonly type="number" min="0" value="0" id="p-b12" oninput="calcTotalesPedido()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Grande trizada 12kg</label>
+          <input class="form-input numpad" inputmode="none" readonly type="number" min="0" value="0" id="p-b12t" oninput="calcTotalesPedido()">
         </div>
       </div>
       <div id="p-stock-aviso" style="margin-top:4px"></div>
@@ -974,8 +987,18 @@
           <input class="form-input numpad" inputmode="none" readonly type="number" min="0" value="0" id="e-b6" oninput="calcTotalesEditar()">
         </div>
         <div class="form-group">
+          <label class="form-label">Med. trizada 6kg</label>
+          <input class="form-input numpad" inputmode="none" readonly type="number" min="0" value="0" id="e-b6t" oninput="calcTotalesEditar()">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
           <label class="form-label">Grande 12kg</label>
           <input class="form-input numpad" inputmode="none" readonly type="number" min="0" value="0" id="e-b12" oninput="calcTotalesEditar()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Grande trizada 12kg</label>
+          <input class="form-input numpad" inputmode="none" readonly type="number" min="0" value="0" id="e-b12t" oninput="calcTotalesEditar()">
         </div>
       </div>
       <div id="e-stock-aviso" style="margin-top:4px"></div>
@@ -1007,53 +1030,36 @@
   </div>
 </div>
 
-<!-- Modal: Retiro de cámara -->
-<div class="modal-overlay" id="modal-retiro" onclick="overlayClose(event,'modal-retiro')">
+<!-- Modal: Conteo físico de cámara -->
+<div class="modal-overlay" id="modal-conteo" onclick="overlayClose(event,'modal-conteo')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title">Retiro de Cámara</div>
+    <div class="modal-title">Conteo de cámara</div>
     <div class="modal-body">
-      <div class="form-row">
+      <p style="font-size:13px;color:var(--text3);margin:0 0 12px">Contá lo que hay de verdad en la cámara. Corregí solo lo que no coincida; el resto dejalo como está.</p>
+      <div id="conteo-filas"></div>
+
+      <div id="conteo-motivo" style="display:none;border-top:1px solid var(--border);padding-top:12px;margin-top:6px">
+        <div class="form-label" style="margin-bottom:6px">Diferencias encontradas</div>
+        <div id="conteo-difs" style="font-size:13px;line-height:1.7;margin-bottom:12px"></div>
         <div class="form-group">
-          <label class="form-label">Repartidor</label>
-          <select class="form-input" id="r-repartidor"></select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Cámara</label>
-          <select class="form-input" id="r-camara">
-            <option>Cámara 2</option>
-            <option>Cámara 4</option>
+          <label class="form-label">Motivo de la diferencia</label>
+          <select class="form-input" id="conteo-motivo-sel" onchange="document.getElementById('conteo-nota-grp').style.display = this.value==='Otro' ? 'block' : 'none'">
+            <option value="Rotura no registrada">Rotura no registrada</option>
+            <option value="Error al contar en producción">Error al contar en producción</option>
+            <option value="Salida sin pedido">Salida sin pedido</option>
+            <option value="Error en conteo anterior">Error en conteo anterior</option>
+            <option value="Otro">Otro</option>
+            <option value="Sin identificar">Sin identificar</option>
           </select>
         </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Cliente destino (opcional)</label>
-        <select class="form-input" id="r-cliente">
-          <option value="">Sin cliente específico</option>
-        </select>
-      </div>
-      <label class="form-label" style="margin-bottom:8px;display:block">Bolsas retiradas</label>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Mini 1.7kg</label>
-          <input class="form-input" type="number" min="0" value="0" id="r-b17">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Chica 3kg</label>
-          <input class="form-input" type="number" min="0" value="0" id="r-b3">
+        <div class="form-group" id="conteo-nota-grp" style="display:none">
+          <label class="form-label">Nota</label>
+          <input class="form-input" type="text" id="conteo-nota" placeholder="Detalle...">
         </div>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Mediana 6kg</label>
-          <input class="form-input" type="number" min="0" value="0" id="r-b6">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Grande 12kg</label>
-          <input class="form-input" type="number" min="0" value="0" id="r-b12">
-        </div>
-      </div>
-      <button class="btn btn-primary btn-block" style="margin-top:8px" onclick="registrarRetiro()">Registrar retiro</button>
+
+      <button class="btn btn-primary btn-block" style="margin-top:8px" id="conteo-btn" onclick="avanzarConteo()">Guardar conteo</button>
     </div>
   </div>
 </div>
@@ -1075,7 +1081,9 @@
             <option value="b17">Mini (1.7kg)</option>
             <option value="b3">Chica (3kg)</option>
             <option value="b6">Mediana (6kg)</option>
+            <option value="b6t">Med. trizada (6kg)</option>
             <option value="b12">Grande (12kg)</option>
+            <option value="b12t">Grande trizada (12kg)</option>
           </select>
         </div>
       </div>
@@ -1109,6 +1117,35 @@
     </div>
     <div class="modal-body">
       <div id="rol-hist"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Embolsar trizado -->
+<div class="modal-overlay" id="modal-embolsado" onclick="overlayClose(event,'modal-embolsado')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Embolsar trizado</div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text3);margin:0 0 12px">Cuántas bolsas de trizado embolsaste. Suma directo al stock de cámara.</p>
+      <div class="form-group">
+        <label class="form-label">Turno</label>
+        <select class="form-input" id="emb-turno">
+          <option value="mañana">Mañana</option>
+          <option value="tarde">Tarde</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Med. trizada 6kg</label>
+          <input class="form-input numpad" inputmode="none" readonly type="number" min="0" value="0" id="emb-b6t">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Grande trizada 12kg</label>
+          <input class="form-input numpad" inputmode="none" readonly type="number" min="0" value="0" id="emb-b12t">
+        </div>
+      </div>
+      <button class="btn btn-primary btn-block" style="margin-top:8px" onclick="guardarEmbolsado()">Guardar</button>
     </div>
   </div>
 </div>
@@ -1291,8 +1328,18 @@
           <input class="form-input" type="number" min="0" id="l-pv2-b6" value="0" oninput="calcPreviewLista()">
         </div>
         <div class="form-group">
+          <label class="form-label">Med. trizada 6kg</label>
+          <input class="form-input" type="number" min="0" id="l-pv2-b6t" value="0" oninput="calcPreviewLista()">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
           <label class="form-label">Grande 12kg</label>
           <input class="form-input" type="number" min="0" id="l-pv2-b12" value="0" oninput="calcPreviewLista()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Grande trizada 12kg</label>
+          <input class="form-input" type="number" min="0" id="l-pv2-b12t" value="0" oninput="calcPreviewLista()">
         </div>
       </div>
       <div id="l-preview" style="background:var(--ice);border-radius:10px;padding:10px;font-size:12px;color:var(--text2);margin-top:4px"></div>
@@ -1631,12 +1678,13 @@ var heladeras = [
   { id: 'H03', modelo: 'Freezer Horizontal', cliente: 'c3', estado: 'Activa', cap: 8 },
 ];
 var turnos = [];
-var retiros = [];
+var ajustes = [];
+var embolsados = [];
 var mermas = [];
 var ventas = [];
 var pedidos = [];
 var preciosSug = { b17: 0, b3: 0, b6: 0, b12: 0 };
-var stockCamara = { b17: 150, b3: 80, b6: 45, b12: 20 };
+var stockCamara = { b17: 150, b3: 80, b6: 45, b6t: 0, b12: 20, b12t: 0 };
 // Motivos de cancelación (editables; se pueden sobreescribir desde config).
 var motivosCancelacion = ['Cliente canceló', 'No hay stock', 'Error de carga', 'Problema de pago', 'Otro'];
 // Listas de precios (Modelo B): cada lista tiene nombre, % de fábrica y PV2 por tipo de bolsa.
@@ -1644,23 +1692,28 @@ var listasPrecios = [];
 // Recibos de liquidación (pagos de los vendedores a la fábrica).
 var recibos = [];
 // Capacidad en kg de cada formato de bolsa (configurable). Se usa para calcular kg por maquinada.
-var capBolsa = { b17: 1.7, b3: 3, b6: 6, b12: 12 };
+var capBolsa = { b17: 1.7, b3: 3, b6: 6, b6t: 6, b12: 12, b12t: 12 };
+var preciosPublico = { b17:0, b3:0, b6:0, b6t:0, b12:0, b12t:0 };
 
 // ── DATA CLIENT (Firestore) ─────────────────────────────────────
 // Sentinel truthy: mantiene los caminos "con backend" y saltea el modo demo local.
 var API_URL = 'firebase';
 // Stock inicial de cámara (apertura). El stock real se recalcula desde los movimientos.
-var stockInicial = { b17:0, b3:0, b6:0, b12:0 };
+var stockInicial = { b17:0, b3:0, b6:0, b6t:0, b12:0, b12t:0 };
 
-// Recalcula el stock de cámara: apertura + producción − retiros − mermas.
+// Recalcula el stock de cámara: apertura + producción − pedidos + ajustes de conteo.
 function calcularStockCamara() {
-  var s = { b17:stockInicial.b17||0, b3:stockInicial.b3||0, b6:stockInicial.b6||0, b12:stockInicial.b12||0 };
-  turnos.forEach(function(t){ if (t.estado !== 'en_curso') { s.b17+=t.b17||0; s.b3+=t.b3||0; s.b6+=t.b6||0; s.b12+=t.b12||0; } });
-  retiros.forEach(function(r){ s.b17-=r.b17||0; s.b3-=r.b3||0; s.b6-=r.b6||0; s.b12-=r.b12||0; });
+  var s = {};
+  tiposBolsa.forEach(function(f){ s[f[0]] = stockInicial[f[0]]||0; });
+  turnos.forEach(function(t){ if (t.estado !== 'en_curso') tiposBolsa.forEach(function(f){ s[f[0]] += t[f[0]]||0; }); });
+  // El trizado se embolsa aparte (no por maquinada); suma su propia entrada al stock.
+  embolsados.forEach(function(e){ tiposBolsa.forEach(function(f){ s[f[0]] += e[f[0]]||0; }); });
   // Un pedido preparado o entregado salió de cámara. Pendiente y cancelado no descuentan
   // (al cancelar un preparado, las bolsas buenas vuelven y las rotas se restan aparte como merma).
-  pedidos.forEach(function(p){ if (p.estado === 'preparado' || p.estado === 'entregado') { s.b17-=p.b17||0; s.b3-=p.b3||0; s.b6-=p.b6||0; s.b12-=p.b12||0; } });
+  pedidos.forEach(function(p){ if (p.estado === 'preparado' || p.estado === 'entregado') tiposBolsa.forEach(function(f){ s[f[0]] -= p[f[0]]||0; }); });
   mermas.forEach(function(m){ if (m.bolsa && s.hasOwnProperty(m.bolsa)) s[m.bolsa]-=m.cant||0; });
+  // Ajustes de conteo físico: corrigen el teórico para que coincida con lo contado en cámara.
+  ajustes.forEach(function(a){ tiposBolsa.forEach(function(f){ s[f[0]] += a[f[0]]||0; }); });
   stockCamara = s;
 }
 
@@ -1768,10 +1821,10 @@ async function sincronizarDatos() {
     setSyncStatus('loading');
     var res = await Promise.all([
       fbGetAll('vendedores'), fbGetAll('clientes'), fbGetAll('heladeras'),
-      fbGetAll('turnos'), fbGetAll('retiros'), fbGetAll('mermas'), fbGetAll('ventas'), fbGetAll('pedidos'),
-      fbGetAll('listas_precios'), fbGetAll('recibos')
+      fbGetAll('turnos'), fbGetAll('ajustes'), fbGetAll('mermas'), fbGetAll('ventas'), fbGetAll('pedidos'),
+      fbGetAll('listas_precios'), fbGetAll('recibos'), fbGetAll('embolsados')
     ]);
-    var vends=res[0], clis=res[1], hels=res[2], turnsData=res[3], retsData=res[4], mermsData=res[5], ventsData=res[6], pedsData=res[7], listasData=res[8], recibosData=res[9];
+    var vends=res[0], clis=res[1], hels=res[2], turnsData=res[3], ajustesData=res[4], mermsData=res[5], ventsData=res[6], pedsData=res[7], listasData=res[8], recibosData=res[9], embData=res[10];
     var cfgDoc = await db.collection('config').doc('app').get();
     var cfg = cfgDoc.exists ? cfgDoc.data() : null;
 
@@ -1781,7 +1834,7 @@ async function sincronizarDatos() {
     });
     listasPrecios = listasData.map(function(l){
       return { id:l.id, nombre:l.nombre||'(sin nombre)', pct:parseFloat(l.pctFabrica)||0,
-        pv2:{ b17:parseFloat(l.pv2_b17)||0, b3:parseFloat(l.pv2_b3)||0, b6:parseFloat(l.pv2_b6)||0, b12:parseFloat(l.pv2_b12)||0 },
+        pv2:{ b17:parseFloat(l.pv2_b17)||0, b3:parseFloat(l.pv2_b3)||0, b6:parseFloat(l.pv2_b6)||0, b6t:parseFloat(l.pv2_b6t)||0, b12:parseFloat(l.pv2_b12)||0, b12t:parseFloat(l.pv2_b12t)||0 },
         pred: l.predeterminada === true };
     });
     recibos = recibosData.map(function(r){
@@ -1789,10 +1842,11 @@ async function sincronizarDatos() {
     });
     heladeras = hels.map(function(h){ return { id:h.id, modelo:h.modelo, cliente:h.clienteId||'', estado:h.estado, cap:h.capacidad||0 }; });
     turnos = turnsData.map(function(t){ return { id:t.id, fecha:t.fecha, operario:t.operario, maquina:t.maquina, turno:t.turno||'', numero:parseInt(t.numero)||0, estado:t.estado||'terminada', inicio:t.hsInicio, fin:t.hsFin||'', kg:t.kgProducidos||0, b17:t.bolsas17||0, b3:t.bolsas3||0, b6:t.bolsas6||0, b12:t.bolsas12||0 }; });
-    retiros = retsData.map(function(r){ return { id:r.id, fecha:r.fecha, hora:r.hora, repartidor:r.repartidor, camara:r.camara, cliente:r.clienteDestino, b17:r.bolsas17||0, b3:r.bolsas3||0, b6:r.bolsas6||0, b12:r.bolsas12||0 }; });
+    ajustes = ajustesData.map(function(a){ return { id:a.id, fecha:a.fecha, hora:a.hora, usuario:a.usuario||'', motivo:a.motivo||'', nota:a.nota||'', b17:a.d_b17||0, b3:a.d_b3||0, b6:a.d_b6||0, b6t:a.d_b6t||0, b12:a.d_b12||0, b12t:a.d_b12t||0 }; });
+    embolsados = embData.map(function(e){ return { id:e.id, fecha:e.fecha, hora:e.hora, operario:e.operario||'', turno:e.turno||'', b6t:e.bolsas6t||0, b12t:e.bolsas12t||0 }; });
     mermas = mermsData.map(function(m){ return { id:m.id, fecha:m.fecha, quien:m.quien, bolsa:m.tipoBolsa, cant:m.cantidad||0, motivo:m.motivo }; });
     ventas = ventsData.map(function(v){ return { id:v.id, fecha:v.fecha, hora:v.hora, vendedor:v.vendedor, cliente:v.cliente, heladera:v.heladera, b17:v.bolsas17||0, b3:v.bolsas3||0, b6:v.bolsas6||0, b12:v.bolsas12||0, pv1:v.pv1||0, pv2:v.pv2||0, pago:v.formaPago, cobrado:v.cobrado }; });
-    pedidos = pedsData.map(function(p){ return { id:p.id, estado:p.estado||'pendiente', cliente:p.clienteId, vendedor:p.vendedorId, asignado:p.asignadoA, b17:p.bolsas17||0, b3:p.bolsas3||0, b6:p.bolsas6||0, b12:p.bolsas12||0, aFabrica:p.aFabrica||0, sugerido:p.sugerido||0, cobrado:p.cobrado, pago:p.formaPago, fechaTomado:p.fechaTomado, fechaPreparado:p.fechaPreparado, fechaEntregado:p.fechaEntregado, horaTomado:p.horaTomado||'', horaPreparado:p.horaPreparado||'', horaEntregado:p.horaEntregado||'', motivoCancel:p.motivoCancelacion||'', fechaCancelado:p.fechaCancelado||null, canceladoPor:p.canceladoPor||'', listaId:p.listaId||'', listaNombre:p.listaNombre||'', pct:parseFloat(p.pctFabrica)||0, pu:{ b17:parseFloat(p.pu_b17)||0, b3:parseFloat(p.pu_b3)||0, b6:parseFloat(p.pu_b6)||0, b12:parseFloat(p.pu_b12)||0 }, pl:{ b17:parseFloat(p.pl_b17)||0, b3:parseFloat(p.pl_b3)||0, b6:parseFloat(p.pl_b6)||0, b12:parseFloat(p.pl_b12)||0 }, ajustadoPor:p.ajustadoPor||'' }; });
+    pedidos = pedsData.map(function(p){ return { id:p.id, estado:p.estado||'pendiente', cliente:p.clienteId, vendedor:p.vendedorId, asignado:p.asignadoA, b17:p.bolsas17||0, b3:p.bolsas3||0, b6:p.bolsas6||0, b6t:p.bolsas6t||0, b12:p.bolsas12||0, b12t:p.bolsas12t||0, aFabrica:p.aFabrica||0, sugerido:p.sugerido||0, cobrado:p.cobrado, pago:p.formaPago, fechaTomado:p.fechaTomado, fechaPreparado:p.fechaPreparado, fechaEntregado:p.fechaEntregado, horaTomado:p.horaTomado||'', horaPreparado:p.horaPreparado||'', horaEntregado:p.horaEntregado||'', motivoCancel:p.motivoCancelacion||'', fechaCancelado:p.fechaCancelado||null, canceladoPor:p.canceladoPor||'', listaId:p.listaId||'', listaNombre:p.listaNombre||'', pct:parseFloat(p.pctFabrica)||0, pu:{ b17:parseFloat(p.pu_b17)||0, b3:parseFloat(p.pu_b3)||0, b6:parseFloat(p.pu_b6)||0, b6t:parseFloat(p.pu_b6t)||0, b12:parseFloat(p.pu_b12)||0, b12t:parseFloat(p.pu_b12t)||0 }, pl:{ b17:parseFloat(p.pl_b17)||0, b3:parseFloat(p.pl_b3)||0, b6:parseFloat(p.pl_b6)||0, b6t:parseFloat(p.pl_b6t)||0, b12:parseFloat(p.pl_b12)||0, b12t:parseFloat(p.pl_b12t)||0 }, ajustadoPor:p.ajustadoPor||'' }; });
     if (cfg) {
       if (cfg.precio_b17) precios.b17 = parseFloat(cfg.precio_b17);
       if (cfg.precio_b3) precios.b3 = parseFloat(cfg.precio_b3);
@@ -1809,6 +1863,7 @@ async function sincronizarDatos() {
       if (cfg.cap_b3)  capBolsa.b3  = parseFloat(cfg.cap_b3);
       if (cfg.cap_b6)  capBolsa.b6  = parseFloat(cfg.cap_b6);
       if (cfg.cap_b12) capBolsa.b12 = parseFloat(cfg.cap_b12);
+      tiposBolsa.forEach(function(t){ if (cfg['pub_'+t[0]]!==undefined) preciosPublico[t[0]] = parseFloat(cfg['pub_'+t[0]])||0; });
     }
     calcularStockCamara();
 
@@ -1970,7 +2025,7 @@ function initApp() {
 
 function populateSelects() {
   var vOpts = vendedores.map(v => `<option value="${v.id}">${v.nombre} (${v.rol})</option>`).join('');
-  ['v-vendedor','r-repartidor','t-operario','c-vendedor','p-vendedor','p-asignado'].forEach(id => {
+  ['v-vendedor','t-operario','c-vendedor','p-vendedor','p-asignado'].forEach(id => {
     var el = document.getElementById(id);
     if (el) el.innerHTML = vOpts;
   });
@@ -1978,11 +2033,10 @@ function populateSelects() {
   // Al tomar un pedido, el vendedor solo elige clientes de su cartera; Cecilia, todos.
   var miId = currentUser ? currentUser.id : '';
   var cOptsPedido = clientes.filter(c => c.activo && (esAdmin() || c.vendedor === miId)).map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
-  ['v-cliente','r-cliente','h-cliente','p-cliente'].forEach(id => {
+  ['v-cliente','h-cliente','p-cliente'].forEach(id => {
     var el = document.getElementById(id);
     if (el) {
-      if (id === 'r-cliente') el.innerHTML = '<option value="">Sin cliente específico</option>' + cOpts;
-      else if (id === 'p-cliente') el.innerHTML = cOptsPedido;
+      if (id === 'p-cliente') el.innerHTML = cOptsPedido;
       else el.innerHTML = cOpts;
     }
   });
@@ -2064,16 +2118,13 @@ function getNomVendedor(id) { var v = vendedores.find(x=>x.id===id); return v ? 
 function getNomCliente(id) { var c = clientes.find(x=>x.id===id); return c ? c.nombre : id; }
 function bolsasLabel(v) {
   var parts = [];
-  if (v.b17 > 0) parts.push(v.b17 + '×Mini');
-  if (v.b3 > 0) parts.push(v.b3 + '×Chica');
-  if (v.b6 > 0) parts.push(v.b6 + '×Med');
-  if (v.b12 > 0) parts.push(v.b12 + '×Grande');
+  tiposBolsa.forEach(function(t){ if ((v[t[0]]||0) > 0) parts.push((v[t[0]]) + '×' + t[2]); });
   return parts.join(', ') || '—';
 }
 function calcPV1(item) {
   return (item.b17||0)*precios.b17 + (item.b3||0)*precios.b3 + (item.b6||0)*precios.b6 + (item.b12||0)*precios.b12;
 }
-function totalBolsas(item) { return (item.b17||0)+(item.b3||0)+(item.b6||0)+(item.b12||0); }
+function totalBolsas(item) { var s=0; tiposBolsa.forEach(function(t){ s += (item[t[0]]||0); }); return s; }
 function esHoy(fecha) { return fecha === hoy(); }
 function esSemana(fecha) {
   var d = new Date(fecha + 'T12:00:00'); var n = new Date();
@@ -2083,7 +2134,7 @@ function esSemana(fecha) {
 // ── RENDER DASHBOARD ──
 function renderDashboard() {
   // Stock total
-  var st = stockCamara.b17 + stockCamara.b3 + stockCamara.b6 + stockCamara.b12;
+  var st = totalBolsas(stockCamara);
   document.getElementById('dash-stock-total').textContent = st;
   if (st < 50) document.getElementById('alert-stock-bajo').style.display = 'flex';
   else document.getElementById('alert-stock-bajo').style.display = 'none';
@@ -2092,9 +2143,36 @@ function renderDashboard() {
   var prodHoy = turnos.filter(t=>esHoy(t.fecha)).reduce((a,t)=>a+t.kg,0);
   document.getElementById('dash-prod-hoy').textContent = prodHoy;
 
-  // Retiros hoy
-  var retHoy = retiros.filter(r=>esHoy(r.fecha)).reduce((a,r)=>a+totalBolsas(r),0);
-  document.getElementById('dash-retiros-hoy').textContent = retHoy;
+  // Estado del conteo de cámara (solo admin)
+  var cc = document.getElementById('dash-conteo-card');
+  if (cc) {
+    if (!esAdmin()) {
+      cc.style.display = 'none';
+    } else {
+      cc.style.display = '';
+      var body = document.getElementById('dash-conteo-body');
+      if (!ajustes.length) {
+        cc.style.borderLeft = '4px solid var(--orange)';
+        body.innerHTML = '<div style="color:var(--orange);font-weight:600">Nunca se hizo un conteo</div>' +
+          '<div style="font-size:12px;color:var(--text3);margin-top:2px">Conviene contar la cámara para controlar el stock.</div>';
+      } else {
+        var ult = ajustes.slice().sort(function(a,b){ return (a.fecha+(a.hora||'')) > (b.fecha+(b.hora||'')) ? -1 : 1; })[0];
+        var hayDif = tiposBolsa.some(function(t){ return (ult[t[0]]||0) !== 0; });
+        var cuando = fmtFecha(ult.fecha) + (ult.usuario ? ' · ' + ult.usuario : '');
+        if (!hayDif) {
+          cc.style.borderLeft = '4px solid var(--green)';
+          body.innerHTML = '<div style="color:var(--green);font-weight:600">✓ Todo OK · sin diferencias</div>' +
+            '<div style="font-size:12px;color:var(--text3);margin-top:2px">Último conteo: ' + cuando + '</div>';
+        } else {
+          var difs = tiposBolsa.filter(function(t){ return (ult[t[0]]||0) !== 0; })
+            .map(function(t){ var d = ult[t[0]]; return t[2] + ' ' + (d>0?'+'+d:d); });
+          cc.style.borderLeft = '4px solid var(--orange)';
+          body.innerHTML = '<div style="color:var(--orange);font-weight:600">⚠ Con diferencias' + (ult.motivo ? ' · ' + ult.motivo : '') + '</div>' +
+            '<div style="font-size:12px;color:var(--text3);margin-top:2px">' + difs.join(', ') + ' · ' + cuando + '</div>';
+        }
+      }
+    }
+  }
 
   // Ventas hoy
   var ventasHoy = ventas.filter(v=>esHoy(v.fecha));
@@ -2179,31 +2257,35 @@ function renderRankingVendedores(elId, ventasFiltradas) {
 
 // ── RENDER STOCK ──
 function renderStock() {
-  var total = stockCamara.b17 + stockCamara.b3 + stockCamara.b6 + stockCamara.b12;
-  var totalKg = stockCamara.b17*1.7 + stockCamara.b3*3 + stockCamara.b6*6 + stockCamara.b12*12;
-  document.getElementById('stock-total-bolsas').textContent = total;
-  document.getElementById('stock-total-kg').textContent = Math.round(totalKg);
-
   var tipos = [
-    { key:'b17', label:'Mini 1.7kg', apodo:'Pupi', cap:200 },
-    { key:'b3', label:'Chica 3kg', apodo:'Chica', cap:120 },
-    { key:'b6', label:'Mediana 6kg', apodo:'Med.', cap:80 },
-    { key:'b12', label:'Grande 12kg', apodo:'Grande', cap:40 },
+    { key:'b17',  label:'Mini 1.7kg',          apodo:'Pupi' },
+    { key:'b3',   label:'Chica 3kg',           apodo:'Chica' },
+    { key:'b6',   label:'Mediana 6kg',         apodo:'Med.' },
+    { key:'b6t',  label:'Med. trizada 6kg',    apodo:'Molida' },
+    { key:'b12',  label:'Grande 12kg',         apodo:'Grande' },
+    { key:'b12t', label:'Grande trizada 12kg', apodo:'Molida' },
   ];
-  document.getElementById('stock-detalle').innerHTML = tipos.map(t => {
-    var cant = stockCamara[t.key];
-    var pct = Math.min(100, cant/t.cap*100);
-    var cls = pct < 20 ? 'low' : pct < 40 ? 'mid' : '';
-    var badge = pct < 20 ? '<span class="badge badge-red">Bajo</span>' : pct < 40 ? '<span class="badge badge-orange">Medio</span>' : '<span class="badge badge-green">OK</span>';
-    return `<div class="stock-item">
-      <div class="stock-row">
-        <span class="stock-name">${t.label} <span style="color:var(--text3);font-size:11px">(${t.apodo})</span></span>
-        <span style="display:flex;align-items:center;gap:8px">${badge}<span class="stock-qty">${cant}</span></span>
-      </div>
-      <div class="stock-bar-bg"><div class="stock-bar-fill ${cls}" style="width:${pct}%"></div></div>
-      <div style="font-size:11px;color:var(--text3);margin-top:3px">${cant} bolsas · ${(cant*(t.key==='b17'?1.7:t.key==='b3'?3:t.key==='b6'?6:12)).toFixed(0)} kg</div>
-    </div>`;
+  document.getElementById('stock-detalle').innerHTML = tipos.map(function(t){
+    var cant = stockCamara[t.key]||0;
+    var kg = Math.round(cant * (capBolsa[t.key]||0));
+    return '<div class="metric-card">' +
+      '<div class="metric-label">' + t.label + ' <span style="text-transform:none;font-weight:400;opacity:.7">· ' + t.apodo + '</span></div>' +
+      '<div class="metric-value">' + cant + '</div>' +
+      '<div class="metric-sub">bolsas · ' + kg + ' kg</div>' +
+    '</div>';
   }).join('');
+
+  var fab = document.getElementById('stock-fab');
+  if (fab) fab.style.display = esAdmin() ? '' : 'none';
+  var uc = document.getElementById('stock-ultimo-conteo');
+  if (uc) {
+    if (ajustes.length) {
+      var ult = ajustes.slice().sort(function(a,b){ return (a.fecha+(a.hora||'')) > (b.fecha+(b.hora||'')) ? -1 : 1; })[0];
+      uc.textContent = 'Último conteo: ' + fmtFecha(ult.fecha) + (ult.usuario ? ' · ' + ult.usuario : '');
+    } else {
+      uc.textContent = 'Sin conteos registrados';
+    }
+  }
 
   if (mermas.length === 0) {
     document.getElementById('stock-mermas').innerHTML = '<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Sin mermas recientes</div></div>';
@@ -2212,7 +2294,7 @@ function renderStock() {
       <div class="list-item">
         <div class="list-avatar">⚠️</div>
         <div class="list-info">
-          <div class="list-name">${m.cant} × ${m.bolsa === 'b17' ? 'Mini' : m.bolsa==='b3'?'Chica':m.bolsa==='b6'?'Mediana':'Grande'}</div>
+          <div class="list-name">${m.cant} × ${nombreBolsa(m.bolsa)}</div>
           <div class="list-sub">${m.motivo} · ${getNomVendedor(m.quien)}</div>
         </div>
         <div class="list-right"><div class="list-time">${fmtFecha(m.fecha)}</div></div>
@@ -2511,18 +2593,16 @@ var listaCtx = { p:null, e:null };      // lista efectiva (con .pct y .pv2 origi
 var unitInitCtx = { p:null, e:null };   // precios unitarios iniciales (para editar = los del pedido)
 
 function leerBolsasPref(prefix) {
-  return {
-    b17: parseInt((document.getElementById(prefix+'-b17')||{}).value)||0,
-    b3:  parseInt((document.getElementById(prefix+'-b3')||{}).value)||0,
-    b6:  parseInt((document.getElementById(prefix+'-b6')||{}).value)||0,
-    b12: parseInt((document.getElementById(prefix+'-b12')||{}).value)||0
-  };
+  var b = {};
+  tiposBolsa.forEach(function(t){ b[t[0]] = parseInt((document.getElementById(prefix+'-'+t[0])||{}).value)||0; });
+  return b;
 }
 
 // Precios unitarios efectivos: si es admin y hay inputs, de los inputs; si no, de los iniciales o de la lista.
 function unitPreciosPref(prefix) {
   var lista = listaCtx[prefix], init = unitInitCtx[prefix], unit = {};
-  ['b17','b3','b6','b12'].forEach(function(k){
+  tiposBolsa.forEach(function(t){
+    var k = t[0];
     var inp = document.getElementById(prefix+'-pu-'+k);
     if (esAdmin() && inp) unit[k] = parseFloat(inp.value)||0;
     else if (init) unit[k] = init[k]||0;
@@ -2532,7 +2612,8 @@ function unitPreciosPref(prefix) {
 }
 
 function computeTotalesPedido(bolsas, unit, pct) {
-  var pv2 = (bolsas.b17||0)*(unit.b17||0) + (bolsas.b3||0)*(unit.b3||0) + (bolsas.b6||0)*(unit.b6||0) + (bolsas.b12||0)*(unit.b12||0);
+  var pv2 = 0;
+  tiposBolsa.forEach(function(t){ var k=t[0]; pv2 += (bolsas[k]||0)*(unit[k]||0); });
   var pv1 = Math.round((pct||0)/100 * pv2);
   return { pv2:pv2, pv1:pv1, vend: pv2 - pv1 };
 }
@@ -2551,12 +2632,13 @@ function buildPrecios(prefix) {
   if (!cont) return;
   var lista = listaCtx[prefix];
   var esAdm = esAdmin();
-  var init = unitInitCtx[prefix] || (lista ? lista.pv2 : {b17:0,b3:0,b6:0,b12:0});
+  var init = unitInitCtx[prefix] || (lista ? lista.pv2 : {b17:0,b3:0,b6:0,b6t:0,b12:0,b12t:0});
   var html = '<div style="font-size:13px;color:var(--text2);margin:8px 0 4px">Lista: <b style="color:var(--text)">' + (lista?lista.nombre:'Sin lista') + '</b>' + (lista?(' · fábrica '+lista.pct+'%'):'') + '</div>';
   if (esAdm && lista) {
     html += '<div style="font-size:12px;color:var(--text2);margin-bottom:4px">Precio por bolsa (podés ajustarlo):</div>'
       + '<div class="form-row">' + _grpPU(prefix,'b17','Mini 1.7kg',init.b17||0) + _grpPU(prefix,'b3','Chica 3kg',init.b3||0) + '</div>'
-      + '<div class="form-row">' + _grpPU(prefix,'b6','Mediana 6kg',init.b6||0) + _grpPU(prefix,'b12','Grande 12kg',init.b12||0) + '</div>';
+      + '<div class="form-row">' + _grpPU(prefix,'b6','Mediana 6kg',init.b6||0) + _grpPU(prefix,'b6t','Med. trizada 6kg',init.b6t||0) + '</div>'
+      + '<div class="form-row">' + _grpPU(prefix,'b12','Grande 12kg',init.b12||0) + _grpPU(prefix,'b12t','Grande trizada 12kg',init.b12t||0) + '</div>';
   }
   html += '<div class="card" style="padding:12px;margin-top:8px;background:var(--ice)">'
     + _row2('A fábrica (PV1)', '<span id="'+prefix+'-t-pv1" style="font-weight:700;color:var(--accent)">$0</span>')
@@ -2580,7 +2662,7 @@ function recalcPrecios(prefix) {
   set(prefix+'-t-vend', fmtMoneda(r.vend));
   var aj = '';
   if (esAdmin() && lista) {
-    var dif = ['b17','b3','b6','b12'].some(function(k){ return (unit[k]||0) !== (lista.pv2[k]||0); });
+    var dif = tiposBolsa.some(function(t){ var k=t[0]; return (unit[k]||0) !== (lista.pv2[k]||0); });
     if (dif) aj = '✎ Precio ajustado por ' + ((currentUser&&currentUser.nombre)||'admin');
   }
   set(prefix+'-t-ajuste', aj);
@@ -2595,7 +2677,7 @@ function calcTotalesEditar() { recalcPrecios('e'); }
 function renderAvisoStock(b, elId) {
   var el = document.getElementById(elId);
   if (!el) return;
-  var tipos = [['b17','Mini'],['b3','Chica'],['b6','Med'],['b12','Grande']];
+  var tipos = [['b17','Mini'],['b3','Chica'],['b6','Med'],['b6t','Med triz'],['b12','Grande'],['b12t','Gde triz']];
   var excede = [];
   tipos.forEach(function(t){
     var pide = b[t[0]]||0;
@@ -2616,7 +2698,7 @@ function renderAvisoStock(b, elId) {
 }
 
 function abrirTomarPedido() {
-  ['p-b17','p-b3','p-b6','p-b12'].forEach(function(id){ document.getElementById(id).value='0'; });
+  tiposBolsa.forEach(function(t){ var el=document.getElementById('p-'+t[0]); if(el) el.value='0'; });
   if (currentUser && currentUser.id) {
     var pv = document.getElementById('p-vendedor');
     var pa = document.getElementById('p-asignado');
@@ -2653,10 +2735,10 @@ async function prepararPedido(id) {
   if (p.estado !== 'pendiente') return;
   // Bloqueo: no permitir preparar si falta stock en cámara.
   var faltan = [];
-  [['b17','Mini'],['b3','Chica'],['b6','Med'],['b12','Grande']].forEach(function(par){
+  tiposBolsa.forEach(function(par){
     var k = par[0];
     var falta = (p[k]||0) - (stockCamara[k]||0);
-    if (falta > 0) faltan.push(falta + ' ' + par[1]);
+    if (falta > 0) faltan.push(falta + ' ' + par[2]);
   });
   if (faltan.length) {
     var msg = document.getElementById('prep-msg');
@@ -2678,29 +2760,28 @@ async function tomarPedido() {
   var asignado = document.getElementById('p-asignado').value;
   var b = leerBolsasPref('p');
   if (!cliente) { showToast('Elegí un cliente','⚠️'); return; }
-  if (b.b17+b.b3+b.b6+b.b12 === 0) { showToast('Ingresá al menos una bolsa','⚠️'); return; }
+  if (totalBolsas(b) === 0) { showToast('Ingresá al menos una bolsa','⚠️'); return; }
   var lista = listaCtx.p;
   if (!lista) { showToast('El cliente no tiene lista ni hay predeterminada','⚠️'); return; }
   var unit = unitPreciosPref('p');
   var r = computeTotalesPedido(b, unit, lista.pct);
   var ajustadoPor = '';
-  if (esAdmin() && ['b17','b3','b6','b12'].some(function(k){ return (unit[k]||0) !== (lista.pv2[k]||0); })) {
+  if (esAdmin() && tiposBolsa.some(function(t){ var k=t[0]; return (unit[k]||0) !== (lista.pv2[k]||0); })) {
     ajustadoPor = currentUser.nombre;
   }
-  var res = await fbAdd('pedidos', {
+  var campos = {
     estado: 'pendiente',
     clienteId: cliente, vendedorId: vendedor, asignadoA: asignado, asignadoARepartidor: '',
-    bolsas17: b.b17, bolsas3: b.b3, bolsas6: b.b6, bolsas12: b.b12,
     aFabrica: r.pv1, sugerido: r.pv2,
     listaId: lista.id, listaNombre: lista.nombre, pctFabrica: lista.pct,
-    pu_b17: unit.b17, pu_b3: unit.b3, pu_b6: unit.b6, pu_b12: unit.b12,
-    pl_b17: lista.pv2.b17, pl_b3: lista.pv2.b3, pl_b6: lista.pv2.b6, pl_b12: lista.pv2.b12,
     ajustadoPor: ajustadoPor,
     cobrado: 'no', formaPago: '',
     fechaTomado: hoy(), horaTomado: ahora(),
     fechaPreparado: null, horaPreparado: null,
     fechaEntregado: null, horaEntregado: null
-  });
+  };
+  tiposBolsa.forEach(function(t){ var k=t[0]; campos['bolsas'+k.slice(1)] = b[k]||0; campos['pu_'+k] = unit[k]||0; campos['pl_'+k] = lista.pv2[k]||0; });
+  var res = await fbAdd('pedidos', campos);
   if (res.ok) {
     closeModal('modal-tomar-pedido');
     showToast('Pedido tomado ✓');
@@ -2718,14 +2799,13 @@ function abrirEditarPedido(id) {
   if (p.estado !== 'pendiente') { showToast('Solo se editan pedidos pendientes','⚠️'); return; }
   document.getElementById('e-id').value = id;
   document.getElementById('e-cliente').textContent = getNomCliente(p.cliente);
-  document.getElementById('e-b17').value = p.b17||0;
-  document.getElementById('e-b3').value  = p.b3||0;
-  document.getElementById('e-b6').value  = p.b6||0;
-  document.getElementById('e-b12').value = p.b12||0;
+  tiposBolsa.forEach(function(t){ var el=document.getElementById('e-'+t[0]); if(el) el.value = p[t[0]]||0; });
   // La lista y el % quedan fijos (los del pedido). Precios de lista originales = pl.
-  listaCtx.e = { id:p.listaId||'', nombre:p.listaNombre||'—', pct:p.pct||0, pv2:{ b17:p.pl.b17, b3:p.pl.b3, b6:p.pl.b6, b12:p.pl.b12 } };
+  var plv = {}, puv = {};
+  tiposBolsa.forEach(function(t){ var k=t[0]; plv[k] = (p.pl&&p.pl[k])||0; puv[k] = (p.pu&&p.pu[k])||0; });
+  listaCtx.e = { id:p.listaId||'', nombre:p.listaNombre||'—', pct:p.pct||0, pv2:plv };
   // Precios usados actuales (pueden estar ya ajustados por Cecilia).
-  unitInitCtx.e = { b17:p.pu.b17, b3:p.pu.b3, b6:p.pu.b6, b12:p.pu.b12 };
+  unitInitCtx.e = puv;
   buildPrecios('e');
   openModal('modal-editar-pedido');
 }
@@ -2735,21 +2815,18 @@ async function guardarEditarPedido() {
   var p = pedidos.find(function(x){ return x.id === id; });
   if (!p || p.estado !== 'pendiente') { showToast('No se puede editar','⚠️'); return; }
   var b = leerBolsasPref('e');
-  if (b.b17+b.b3+b.b6+b.b12 === 0) { showToast('Ingresá al menos una bolsa','⚠️'); return; }
+  if (totalBolsas(b) === 0) { showToast('Ingresá al menos una bolsa','⚠️'); return; }
   var lista = listaCtx.e;
   var unit = unitPreciosPref('e');
   var r = computeTotalesPedido(b, unit, lista?lista.pct:0);
   // Ajuste: si es admin y tocó algún precio respecto a la lista original. Si no es admin, se mantiene el que había.
   var ajustadoPor = p.ajustadoPor || '';
   if (esAdmin()) {
-    ajustadoPor = (lista && ['b17','b3','b6','b12'].some(function(k){ return (unit[k]||0) !== (lista.pv2[k]||0); })) ? currentUser.nombre : '';
+    ajustadoPor = (lista && tiposBolsa.some(function(t){ var k=t[0]; return (unit[k]||0) !== (lista.pv2[k]||0); })) ? currentUser.nombre : '';
   }
-  var res = await fbUpdate('pedidos', id, {
-    bolsas17:b.b17, bolsas3:b.b3, bolsas6:b.b6, bolsas12:b.b12,
-    aFabrica:r.pv1, sugerido:r.pv2,
-    pu_b17:unit.b17, pu_b3:unit.b3, pu_b6:unit.b6, pu_b12:unit.b12,
-    ajustadoPor: ajustadoPor
-  });
+  var campos = { aFabrica:r.pv1, sugerido:r.pv2, ajustadoPor: ajustadoPor };
+  tiposBolsa.forEach(function(t){ var k=t[0]; campos['bolsas'+k.slice(1)] = b[k]||0; campos['pu_'+k] = unit[k]||0; });
+  var res = await fbUpdate('pedidos', id, campos);
   if (!res.ok) return;
   closeModal('modal-editar-pedido');
   showToast('Pedido actualizado ✓');
@@ -2759,7 +2836,8 @@ async function guardarEditarPedido() {
 }
 
 // ── CANCELAR PEDIDO (pendiente o preparado) ─────────────────────
-var tiposBolsa = [['b17','Mini 1.7kg'],['b3','Chica 3kg'],['b6','Mediana 6kg'],['b12','Grande 12kg']];
+var tiposBolsa = [['b17','Mini 1.7kg','Mini'],['b3','Chica 3kg','Chica'],['b6','Mediana 6kg','Med'],['b6t','Med. trizada 6kg','Med triz'],['b12','Grande 12kg','Grande'],['b12t','Grande trizada 12kg','Gde triz']];
+function nombreBolsa(key) { var t = tiposBolsa.find(function(x){ return x[0]===key; }); return t ? t[1] : key; }
 
 function abrirCancelarPedido(id) {
   var p = pedidos.find(function(x){ return x.id === id; });
@@ -2997,7 +3075,7 @@ async function guardarEditarCliente() {
 }
 
 // ── LISTAS DE PRECIOS (Etapa 1) ─────────────────────────────────
-var tiposLista = [['b17','Mini'],['b3','Chica'],['b6','Med'],['b12','Grande']];
+var tiposLista = [['b17','Mini'],['b3','Chica'],['b6','Med'],['b6t','Med. trizada'],['b12','Grande'],['b12t','Grande trizada']];
 var _seedListaHecho = false;
 
 function getListaById(id) { return listasPrecios.find(function(l){ return l.id === id; }) || null; }
@@ -3017,7 +3095,7 @@ async function renderListas() {
     _seedListaHecho = true;
     await fbAdd('listas_precios', {
       nombre: 'General', pctFabrica: 70,
-      pv2_b17: 1200, pv2_b3: 2000, pv2_b6: 3600, pv2_b12: 6400,
+      pv2_b17: 1200, pv2_b3: 2000, pv2_b6: 3600, pv2_b6t: 0, pv2_b12: 6400, pv2_b12t: 0,
       predeterminada: true
     });
     await sincronizarDatos();
@@ -3064,7 +3142,7 @@ function abrirNuevaLista() {
   document.getElementById('l-id').value = '';
   document.getElementById('l-nombre').value = '';
   document.getElementById('l-pct').value = 70;
-  ['b17','b3','b6','b12'].forEach(function(k){ document.getElementById('l-pv2-' + k).value = 0; });
+  tiposLista.forEach(function(t){ document.getElementById('l-pv2-' + t[0]).value = 0; });
   setPredLista(false);
   document.getElementById('l-borrar').style.display = 'none';
   calcPreviewLista();
@@ -3078,10 +3156,7 @@ function abrirEditarLista(id) {
   document.getElementById('l-id').value = l.id;
   document.getElementById('l-nombre').value = l.nombre;
   document.getElementById('l-pct').value = l.pct;
-  document.getElementById('l-pv2-b17').value = l.pv2.b17;
-  document.getElementById('l-pv2-b3').value = l.pv2.b3;
-  document.getElementById('l-pv2-b6').value = l.pv2.b6;
-  document.getElementById('l-pv2-b12').value = l.pv2.b12;
+  tiposLista.forEach(function(t){ document.getElementById('l-pv2-' + t[0]).value = l.pv2[t[0]] || 0; });
   setPredLista(l.pred);
   document.getElementById('l-borrar').style.display = 'block';
   calcPreviewLista();
@@ -3096,12 +3171,9 @@ async function guardarLista() {
   if (pct < 0 || pct > 100) { showToast('El % debe estar entre 0 y 100','⚠️'); return; }
   var campos = {
     nombre: nombre, pctFabrica: pct,
-    pv2_b17: parseFloat(document.getElementById('l-pv2-b17').value)||0,
-    pv2_b3:  parseFloat(document.getElementById('l-pv2-b3').value)||0,
-    pv2_b6:  parseFloat(document.getElementById('l-pv2-b6').value)||0,
-    pv2_b12: parseFloat(document.getElementById('l-pv2-b12').value)||0,
     predeterminada: editListaPred
   };
+  tiposLista.forEach(function(t){ campos['pv2_' + t[0]] = parseFloat(document.getElementById('l-pv2-' + t[0]).value)||0; });
   var res;
   if (id) { res = await fbUpdate('listas_precios', id, campos); }
   else { res = await fbAdd('listas_precios', campos); }
@@ -3272,7 +3344,50 @@ function renderProduccion() {
       + '</div>';
   }).join('');
   document.getElementById('prod-rolideras').innerHTML = cards;
+  renderTrizado();
   tickCronometros();
+}
+
+// Tarjeta de Trizado (molida): embolsado aparte + historial reciente.
+function renderTrizado() {
+  var cont = document.getElementById('prod-trizado');
+  if (!cont) return;
+  var recientes = embolsados.slice().sort(function(a,b){ return (a.fecha+(a.hora||'')) > (b.fecha+(b.hora||'')) ? -1 : 1; }).slice(0,5);
+  var hist = recientes.length ? recientes.map(function(e){
+    var partes = [];
+    if (e.b6t>0) partes.push(e.b6t+' Med');
+    if (e.b12t>0) partes.push(e.b12t+' Grande');
+    return '<div style="display:flex;justify-content:space-between;gap:8px;font-size:13px;padding:7px 0;border-top:1px solid var(--border)">'
+      + '<span style="font-weight:600">' + (partes.join(' · ')||'—') + '</span>'
+      + '<span style="color:var(--text3)">' + (e.turno||'') + ' · ' + getNomVendedor(e.operario) + ' · ' + fmtFecha(e.fecha) + '</span></div>';
+  }).join('') : '<div style="color:var(--text3);font-size:13px;padding:8px 0">Sin embolsados aún</div>';
+  cont.innerHTML = '<div class="card" style="padding:20px 18px;margin-bottom:14px">'
+    + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">'
+      + '<span style="font-size:34px">🧊</span>'
+      + '<div style="flex:1"><div style="font-weight:700;font-size:19px">Trizado (molida)</div>'
+      + '<div style="font-size:13px;color:var(--text2)">Excedente embolsado aparte</div></div></div>'
+    + '<button class="btn btn-primary btn-block" style="padding:16px 0;font-size:16px" onclick="abrirEmbolsado()">Embolsar trizado</button>'
+    + '<div style="margin-top:14px">' + hist + '</div>'
+    + '</div>';
+}
+
+function abrirEmbolsado() {
+  document.getElementById('emb-turno').value = turnoPorHora();
+  document.getElementById('emb-b6t').value = '0';
+  document.getElementById('emb-b12t').value = '0';
+  openModal('modal-embolsado');
+}
+
+async function guardarEmbolsado() {
+  var b6t = parseInt(document.getElementById('emb-b6t').value)||0;
+  var b12t = parseInt(document.getElementById('emb-b12t').value)||0;
+  if (b6t + b12t === 0) { showToast('Cargá al menos una bolsa','⚠️'); return; }
+  var res = await fbAdd('embolsados', {
+    fecha:hoy(), hora:ahora(), operario:(currentUser&&currentUser.id)||'',
+    turno:document.getElementById('emb-turno').value,
+    bolsas6t:b6t, bolsas12t:b12t
+  });
+  if (res.ok) { closeModal('modal-embolsado'); showToast('Trizado embolsado ✓'); await sincronizarDatos(); }
 }
 
 // Historial de una rolítera: hoy desplegado; días anteriores colapsados (se tocan para abrir).
@@ -3378,6 +3493,8 @@ function renderReportes(p) {
   var ent = pedidos.filter(function(x){ return x.estado === 'entregado' && enPeriodoRep(x.fechaEntregado, p); });
   var prodFilt = turnos.filter(function(x){ return enPeriodoRep(x.fecha, p); });
   var merFilt = mermas.filter(function(x){ return enPeriodoRep(x.fecha, p); });
+  var embFilt = embolsados.filter(function(x){ return enPeriodoRep(x.fecha, p); });
+  var ajFilt = ajustes.filter(function(x){ return enPeriodoRep(x.fecha, p); });
 
   var totalPV2 = ent.reduce(function(a,x){ return a+(x.sugerido||0); }, 0);
   var totalPV1 = ent.reduce(function(a,x){ return a+(x.aFabrica||0); }, 0);
@@ -3394,6 +3511,56 @@ function renderReportes(p) {
   document.getElementById('rep-prod').textContent = totalProd;
   document.getElementById('rep-mermas').textContent = totalMer;
   document.getElementById('rep-tiempo').textContent = fmtMin(prom);
+
+  // Trizado embolsado en el período (bolsas).
+  var trizBols = embFilt.reduce(function(a,e){ return a + (e.b6t||0) + (e.b12t||0); }, 0);
+  document.getElementById('rep-trizado').textContent = trizBols;
+
+  // Diferencias de conteo: totales rápidos + lista por conteo, cada uno con su ventana.
+  var falt = 0, sobra = 0;
+  ajFilt.forEach(function(a){
+    tiposBolsa.forEach(function(t){ var d = a[t[0]]||0; if (d < 0) falt += -d; else if (d > 0) sobra += d; });
+  });
+  // Orden global de conteos para saber, de cada uno, cuál fue el anterior.
+  var dtKey = function(a){ return (a.fecha||'') + ' ' + (a.hora||''); };
+  var allSorted = ajustes.slice().sort(function(a,b){ return dtKey(a) < dtKey(b) ? -1 : 1; });
+  var prevDe = {};
+  for (var i = 0; i < allSorted.length; i++) { prevDe[allSorted[i].id] = i > 0 ? allSorted[i-1] : null; }
+  // Conteos del período con diferencia, más nuevos primero.
+  var conDif = ajFilt.filter(function(a){ return tiposBolsa.some(function(t){ return (a[t[0]]||0) !== 0; }); })
+    .sort(function(a,b){ return dtKey(a) > dtKey(b) ? -1 : 1; });
+
+  var repConteo = document.getElementById('rep-conteo');
+  if (repConteo) {
+    if (!ajFilt.length) {
+      repConteo.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Sin conteos en el período</div></div>';
+    } else if (!conDif.length) {
+      repConteo.innerHTML = '<div style="color:var(--green);font-weight:600;font-size:14px">✓ Sin diferencias · ' + ajFilt.length + ' conteo(s)</div>';
+    } else {
+      var resumen = '<div style="display:flex;gap:16px;margin-bottom:12px">'
+        + '<div><span style="color:var(--red);font-weight:700;font-size:18px">' + falt + '</span> <span style="font-size:12px;color:var(--text3)">faltaron</span></div>'
+        + '<div><span style="color:var(--green);font-weight:700;font-size:18px">' + sobra + '</span> <span style="font-size:12px;color:var(--text3)">sobraron</span></div></div>';
+      var lista = conDif.map(function(a){
+        var difs = tiposBolsa.filter(function(t){ return (a[t[0]]||0) !== 0; }).map(function(t){
+          var d = a[t[0]]; var col = d < 0 ? 'var(--red)' : 'var(--green)';
+          return '<span style="color:' + col + ';font-weight:600">' + t[2] + ' ' + (d > 0 ? '+' + d : d) + '</span>';
+        }).join(' · ');
+        var prev = prevDe[a.id], ventana;
+        if (prev) {
+          var prevOk = !tiposBolsa.some(function(t){ return (prev[t[0]]||0) !== 0; });
+          ventana = 'desde ' + fmtFecha(prev.fecha) + (prev.hora ? ' ' + prev.hora : '') + (prevOk ? ' (cerró OK)' : ' (con dif.)');
+        } else {
+          ventana = 'desde el inicio';
+        }
+        return '<div style="padding:9px 0;border-top:1px solid var(--border)">'
+          + '<div style="font-size:13px;font-weight:600">' + fmtFecha(a.fecha) + (a.hora ? ' ' + a.hora : '') + ' <span style="font-weight:400;color:var(--text3)">· ' + ventana + '</span></div>'
+          + '<div style="font-size:13px;margin-top:3px">' + difs + '</div>'
+          + (a.motivo ? '<div style="font-size:12px;color:var(--text3);margin-top:2px">' + a.motivo + (a.nota ? ' — ' + a.nota : '') + '</div>' : '')
+          + '</div>';
+      }).join('');
+      repConteo.innerHTML = resumen + lista;
+    }
+  }
 
   // Por vendedor (facturación PV2, por quién tomó el pedido).
   var porVend = {};
@@ -3462,6 +3629,20 @@ function renderConfig() {
     <div style="margin-top:12px;padding:10px;background:var(--ice);border-radius:10px;font-size:12px;color:var(--text2)">
       Estos son los precios PV1 (fábrica → vendedor). El PV2 lo registra el vendedor al cargar cada venta.
     </div>`;
+  var pubCont = document.getElementById('config-publico');
+  if (pubCont) {
+    pubCont.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      ${tiposBolsa.map(t=>`
+      <div>
+        <label class="form-label">${t[1]}</label>
+        <input class="form-input" type="number" value="${preciosPublico[t[0]]||0}" onchange="preciosPublico['${t[0]}']=+this.value" min="0">
+      </div>`).join('')}
+    </div>
+    <div style="margin-top:12px;padding:10px;background:var(--ice);border-radius:10px;font-size:12px;color:var(--text2)">
+      Precio al público por bolsa, para la venta directa en fábrica. Se cobra este monto.
+    </div>`;
+  }
   var capCont = document.getElementById('config-capacidad');
   if (capCont) {
     capCont.innerHTML = `
@@ -3507,25 +3688,6 @@ function registrarVenta() {
   // Reset
   ['v-b17','v-b3','v-b6','v-b12','v-pv2'].forEach(id=>document.getElementById(id).value='0');
   selectCobrado('si');
-}
-
-function registrarRetiro() {
-  var repartidor = document.getElementById('r-repartidor').value;
-  var camara = document.getElementById('r-camara').value;
-  var cliente = document.getElementById('r-cliente').value;
-  var b17 = parseInt(document.getElementById('r-b17').value)||0;
-  var b3 = parseInt(document.getElementById('r-b3').value)||0;
-  var b6 = parseInt(document.getElementById('r-b6').value)||0;
-  var b12 = parseInt(document.getElementById('r-b12').value)||0;
-  if (b17+b3+b6+b12===0) { showToast('Ingresá al menos una bolsa','⚠️'); return; }
-  // Verificar stock
-  if (b17>stockCamara.b17||b3>stockCamara.b3||b6>stockCamara.b6||b12>stockCamara.b12) { showToast('Stock insuficiente en cámara','❌'); return; }
-  retiros.push({ fecha:hoy(), hora:ahora(), repartidor, camara, cliente, b17, b3, b6, b12 });
-  stockCamara.b17 -= b17; stockCamara.b3 -= b3; stockCamara.b6 -= b6; stockCamara.b12 -= b12;
-  closeModal('modal-retiro');
-  showToast('Retiro registrado');
-  renderDashboard(); renderStock();
-  ['r-b17','r-b3','r-b6','r-b12'].forEach(id=>document.getElementById(id).value='0');
 }
 
 function registrarMerma() {
@@ -3595,16 +3757,90 @@ registrarVenta = async function() {
   if (res.ok) { closeModal('modal-venta'); showToast('Venta guardada ✓'); await sincronizarDatos(); ['v-b17','v-b3','v-b6','v-b12','v-pv2'].forEach(function(id){document.getElementById(id).value='0';}); selectCobrado('si'); }
 };
 
-registrarRetiro = async function() {
-  var b17=parseInt(document.getElementById('r-b17').value)||0, b3=parseInt(document.getElementById('r-b3').value)||0, b6=parseInt(document.getElementById('r-b6').value)||0, b12=parseInt(document.getElementById('r-b12').value)||0;
-  if (b17+b3+b6+b12===0) { showToast('Ingresá al menos una bolsa','⚠️'); return; }
-  var res = await fbAdd('retiros', {
-    fecha:hoy(), hora:ahora(), repartidor:document.getElementById('r-repartidor').value,
-    camara:document.getElementById('r-camara').value, clienteDestino:document.getElementById('r-cliente').value,
-    bolsas17:b17, bolsas3:b3, bolsas6:b6, bolsas12:b12
+function abrirConteo() {
+  if (!esAdmin()) { showToast('Solo el admin puede hacer el conteo','⚠️'); return; }
+  calcularStockCamara();
+  var tipos = [
+    { key:'b17',  label:'Mini 1.7kg' },
+    { key:'b3',   label:'Chica 3kg' },
+    { key:'b6',   label:'Mediana 6kg' },
+    { key:'b6t',  label:'Med. trizada 6kg' },
+    { key:'b12',  label:'Grande 12kg' },
+    { key:'b12t', label:'Grande trizada 12kg' },
+  ];
+  document.getElementById('conteo-filas').innerHTML = tipos.map(function(t){
+    var teo = stockCamara[t.key]||0;
+    return '<div class="form-group" style="margin-bottom:10px">' +
+      '<label class="form-label">' + t.label + ' <span style="color:var(--text3);font-weight:400">· teórico ' + teo + '</span></label>' +
+      '<input class="form-input numpad" inputmode="none" readonly type="number" min="0" id="c-' + t.key + '" value="' + teo + '" data-teo="' + teo + '">' +
+    '</div>';
+  }).join('');
+  document.getElementById('conteo-motivo').style.display = 'none';
+  document.getElementById('conteo-nota-grp').style.display = 'none';
+  document.getElementById('conteo-motivo-sel').value = 'Rotura no registrada';
+  document.getElementById('conteo-nota').value = '';
+  document.getElementById('conteo-btn').textContent = 'Guardar conteo';
+  openModal('modal-conteo');
+}
+
+function leerConteo() {
+  var tipos = [
+    { key:'b17',  label:'Mini 1.7kg' },
+    { key:'b3',   label:'Chica 3kg' },
+    { key:'b6',   label:'Mediana 6kg' },
+    { key:'b6t',  label:'Med. trizada 6kg' },
+    { key:'b12',  label:'Grande 12kg' },
+    { key:'b12t', label:'Grande trizada 12kg' },
+  ];
+  var campos = { fecha:hoy(), hora:ahora(), usuario: currentUser ? currentUser.nombre : '' };
+  var difs = [];
+  tipos.forEach(function(t){
+    var inp = document.getElementById('c-' + t.key);
+    if (!inp) return;
+    var contado = parseInt(inp.value)||0;
+    var teo = parseInt(inp.getAttribute('data-teo'))||0;
+    var delta = contado - teo;
+    campos['d_' + t.key] = delta;      // diferencia (corrección de stock)
+    campos['c_' + t.key] = contado;    // contado (historial)
+    if (delta !== 0) difs.push({ label:t.label, teo:teo, contado:contado, delta:delta });
   });
-  if (res.ok) { closeModal('modal-retiro'); showToast('Retiro guardado ✓'); await sincronizarDatos(); ['r-b17','r-b3','r-b6','r-b12'].forEach(function(id){document.getElementById(id).value='0';}); }
-};
+  return { campos:campos, difs:difs };
+}
+
+function avanzarConteo() {
+  if (!esAdmin()) { showToast('Solo el admin puede hacer el conteo','⚠️'); return; }
+  var r = leerConteo();
+  // Sin diferencias: se guarda como control, sin motivo.
+  if (r.difs.length === 0) { guardarAjuste(r.campos, false); return; }
+  var motivoVisible = document.getElementById('conteo-motivo').style.display !== 'none';
+  if (!motivoVisible) {
+    // Paso 1: mostrar las diferencias y pedir el motivo.
+    document.getElementById('conteo-difs').innerHTML = r.difs.map(function(d){
+      var signo = d.delta > 0 ? '+' + d.delta : '' + d.delta;
+      var color = d.delta < 0 ? 'var(--red,#c0392b)' : 'var(--green,#27ae60)';
+      return '<div>' + d.label + ': teórico ' + d.teo + ' → contado ' + d.contado +
+             ' (<b style="color:' + color + '">' + signo + '</b>)</div>';
+    }).join('');
+    document.getElementById('conteo-motivo').style.display = 'block';
+    document.getElementById('conteo-btn').textContent = 'Confirmar conteo';
+    return;
+  }
+  // Paso 2: confirmar con motivo.
+  var motivo = document.getElementById('conteo-motivo-sel').value;
+  var nota = (document.getElementById('conteo-nota').value || '').trim();
+  r.campos.motivo = motivo;
+  r.campos.nota = (motivo === 'Otro') ? nota : '';
+  guardarAjuste(r.campos, true);
+}
+
+async function guardarAjuste(campos, hayDif) {
+  var res = await fbAdd('ajustes', campos);
+  if (res.ok) {
+    closeModal('modal-conteo');
+    showToast(hayDif ? 'Conteo guardado, stock corregido ✓' : 'Conteo guardado, sin diferencias ✓');
+    await sincronizarDatos();
+  }
+}
 
 registrarMerma = async function() {
   var res = await fbAdd('mermas', {
@@ -3861,10 +4097,12 @@ registrarHeladera = async function() {
 guardarConfig = async function() {
   try {
     setSyncStatus('loading');
-    await db.collection('config').doc('app').set({
+    var cfgSave = {
       precio_b17:precios.b17, precio_b3:precios.b3, precio_b6:precios.b6, precio_b12:precios.b12,
       cap_b17:capBolsa.b17, cap_b3:capBolsa.b3, cap_b6:capBolsa.b6, cap_b12:capBolsa.b12
-    }, { merge:true });
+    };
+    tiposBolsa.forEach(function(t){ cfgSave['pub_'+t[0]] = preciosPublico[t[0]]||0; });
+    await db.collection('config').doc('app').set(cfgSave, { merge:true });
     setSyncStatus('ok');
     showToast('Configuración guardada');
   } catch(e) { setSyncStatus('err'); showToast('No se pudo guardar','❌'); }
