@@ -395,6 +395,22 @@
   .mas-group{font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin:18px 4px 2px;padding-top:6px}
   .mas-group:first-child{margin-top:8px}
   .mas-badge{margin-left:auto;font-size:10px;font-weight:700;color:var(--accent2);background:var(--ice);border:1px solid #B8CDE4;border-radius:20px;padding:3px 8px;white-space:nowrap}
+  .ins-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+  .ins-card{background:var(--card);border-radius:16px;box-shadow:0 2px 14px rgba(26,58,92,.07);padding:15px;position:relative;cursor:pointer}
+  .ins-card.low{box-shadow:0 0 0 2px var(--red) inset,0 2px 14px rgba(26,58,92,.07)}
+  .ins-name{font-size:14px;font-weight:600;color:var(--text2)}
+  .ins-qty{font-size:32px;font-weight:800;letter-spacing:-1px;line-height:1;margin:8px 0 2px}
+  .ins-min{font-size:11px;color:var(--text3);margin-top:6px}
+  .ins-badge{position:absolute;top:12px;right:12px;font-size:10px;font-weight:700;color:#fff;background:var(--red);border-radius:20px;padding:3px 8px}
+  .ins-mov{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+  .ins-mov:last-child{border-bottom:none}
+  .ins-mov .mi{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex:none;font-weight:800;font-size:12px;background:var(--ice);color:var(--accent2)}
+  .ins-mov .mi.out{background:#FDEBEC;color:var(--red)}
+  .ins-mov .mn{font-size:14px;font-weight:600}
+  .ins-mov .ms{font-size:12px;color:var(--text3)}
+  .ins-mov .mq{margin-left:auto;font-weight:700}
+  .ins-mov .mq.in{color:var(--green)}
+  .ins-mov .mq.out{color:var(--red)}
 </style>
 </head>
 <body>
@@ -843,6 +859,71 @@
 <!-- ═══════════════════════════════════════════════════
      BOTTOM NAV
 ════════════════════════════════════════════════════ -->
+
+<div class="subpage pt-safe" id="screen-insumos">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
+    <button onclick="navBack()" class="backbtn" data-ic="arrowLeft" data-ic-size="24" aria-label="Volver"></button>
+    <div class="section-title" style="margin:0">Insumos</div>
+  </div>
+  <div style="font-size:13px;color:var(--text2);margin-bottom:14px">Stock de bolsas y ganchos. Se descuenta solo al producir.</div>
+  <div id="insumos-alerta"></div>
+  <div class="ins-grid" id="insumos-cards"></div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Últimos movimientos</div></div>
+    <div id="insumos-movs"></div>
+  </div>
+  <div style="display:flex;gap:10px;margin-top:4px">
+    <button class="btn btn-primary" style="flex:1" onclick="abrirCompraInsumo()">+ Cargar compra</button>
+    <button class="btn" style="flex:1;background:var(--ice);color:var(--accent2)" onclick="abrirAjusteInsumo()">Ajuste</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-insumo-compra" onclick="overlayClose(event,'modal-insumo-compra')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Cargar compra</div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Insumo</label><select class="form-input" id="ci-insumo"></select></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Cantidad</label><input class="form-input numpad" inputmode="none" readonly type="number" min="0" value="0" id="ci-cant"></div>
+        <div class="form-group"><label class="form-label">Fecha</label><input type="date" class="form-input" id="ci-fecha"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Proveedor</label><input class="form-input" type="text" id="ci-prov" placeholder="ej: Plásticos SUR"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">N° remito</label><input class="form-input" type="text" id="ci-remito" placeholder="0451"></div>
+        <div class="form-group"><label class="form-label">Precio (opcional)</label><input class="form-input numpad" inputmode="none" readonly type="number" min="0" value="0" id="ci-precio"></div>
+      </div>
+      <button class="btn btn-primary btn-block" style="margin-top:8px" onclick="guardarCompraInsumo()">Guardar compra</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-insumo-ajuste" onclick="overlayClose(event,'modal-insumo-ajuste')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Ajuste de stock</div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Insumo</label><select class="form-input" id="aj-insumo" onchange="refrescarAjuste()"></select></div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:12px" id="aj-actual">Stock actual: 0</div>
+      <div class="form-group"><label class="form-label">Nuevo stock (queda en esta cantidad)</label><input class="form-input numpad" inputmode="none" readonly type="number" min="0" value="0" id="aj-nuevo"></div>
+      <div class="form-group"><label class="form-label">Motivo (opcional)</label><input class="form-input" type="text" id="aj-motivo" placeholder="ej: carga inicial, rotura, conteo"></div>
+      <button class="btn btn-primary btn-block" style="margin-top:8px" onclick="guardarAjusteInsumo()">Guardar ajuste</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-insumo-min" onclick="overlayClose(event,'modal-insumo-min')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="im-titulo">Mínimo</div>
+    <div class="modal-body">
+      <input type="hidden" id="im-insumo">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:12px">Cuando el stock baje de este número, aparece el aviso de reponer (acá y en el Inicio).</div>
+      <div class="form-group"><label class="form-label">Stock mínimo</label><input class="form-input numpad" inputmode="none" readonly type="number" min="0" value="0" id="im-valor"></div>
+      <button class="btn btn-primary btn-block" style="margin-top:8px" onclick="guardarMinInsumo()">Guardar</button>
+    </div>
+  </div>
+</div>
 
 <div class="subpage pt-safe" id="screen-usuarios">
 
@@ -1554,7 +1635,7 @@
 // ── NAVIGATION ───────────────────────────────────────────────────
 var carouselIdx = 0;
 var mainTabs = ['dashboard', 'stock', 'pedidos', 'clientes', 'mas'];
-var subPages = ['produccion', 'vendedores', 'reportes', 'heladeras', 'config', 'usuarios', 'listas', 'liquidacion', 'micuenta'];
+var subPages = ['produccion', 'vendedores', 'reportes', 'heladeras', 'config', 'usuarios', 'listas', 'liquidacion', 'micuenta', 'insumos'];
 var currentTabIdx = 0;
 var carouselIdx = 0;
 
@@ -1575,6 +1656,7 @@ var RENDERERS = {
   usuarios: function(){ renderUsuariosScreen(); },
   listas: function(){ renderListas(); },
   liquidacion: function(){ renderLiquidacion(); },
+  insumos: function(){ renderInsumos(); },
   mas: function(){ renderMasMenu(); }
 };
 
@@ -1643,6 +1725,7 @@ var MAS_CATALOG = {
   reportes:['chart','Reportes','Métricas y ventas'],
   listas:['tag','Listas de precios','PV2 y % por lista'],
   liquidacion:['wallet','Liquidación','Cuenta y recibos'],
+  insumos:['box','Insumos','Bolsas y ganchos'],
   usuarios:['idcard','Usuarios','Altas y permisos'],
   config:['gear','Configuración','Precios y capacidad']
 };
@@ -1650,8 +1733,8 @@ function masPorRol() {
   var r = rolLower();
   if (r === 'admin') return ['clientes','vendedores','reportes','heladeras','listas','liquidacion','usuarios','config'];
   if (r === 'vendedor') return ['heladeras'];
-  if (r === 'operario') return [];
-  if (r === 'operario/vendedor') return ['stock','micuenta','heladeras'];
+  if (r === 'operario') return ['insumos'];
+  if (r === 'operario/vendedor') return ['stock','micuenta','heladeras','insumos'];
   return [];
 }
 function renderMasMenu() {
@@ -1670,12 +1753,7 @@ function renderMasMenu() {
     ];
     var html = '';
     grupos.forEach(function(g){
-      var rows = g[1].map(function(k){
-        if (k === 'insumos') {
-          return '<div class="list-item" style="opacity:.55"><div class="list-avatar">'+icon('box',24)+'</div><div class="list-info"><div class="list-name">Insumos</div><div class="list-sub">Bolsas, ganchos y más</div></div><span class="mas-badge">próximamente</span></div>';
-        }
-        return fila(k);
-      }).join('');
+      var rows = g[1].map(function(k){ return fila(k); }).join('');
       if (rows) html += '<div class="mas-group">'+g[0]+'</div>'+rows;
     });
     cont.innerHTML = html;
@@ -1684,6 +1762,63 @@ function renderMasMenu() {
   var items = masPorRol();
   if (!items.length) { cont.innerHTML = '<div class="empty" style="padding:20px 0"><div class="empty-text">Sin más secciones</div></div>'; return; }
   cont.innerHTML = items.map(fila).join('');
+}
+
+function insumoNombre(k){ var i=INSUMOS.find(function(x){return x[0]===k;}); return i?i[1]:k; }
+function stockInsumo(k){ var s=0; insumosMov.forEach(function(m){ if(m.insumo===k) s+=m.cant||0; }); return s; }
+function renderInsumos(){
+  var bajos = INSUMOS.filter(function(it){ var mn=insumosMin[it[0]]||0; return mn>0 && stockInsumo(it[0]) < mn; }).map(function(it){ return it[1]+' ('+stockInsumo(it[0])+')'; });
+  var al = document.getElementById('insumos-alerta');
+  if (al) al.innerHTML = bajos.length ? '<div class="alert alert-yellow" style="display:flex"><span class="alert-icon">'+icon('warning',22)+'</span><div><b>Reponer pronto</b> \u00b7 '+bajos.join(', ')+' por debajo del m\u00ednimo.</div></div>' : '';
+  var cont = document.getElementById('insumos-cards');
+  if (cont) cont.innerHTML = INSUMOS.map(function(it){
+    var st=stockInsumo(it[0]), mn=insumosMin[it[0]]||0, low=(mn>0 && st<mn);
+    return '<div class="ins-card'+(low?' low':'')+'" onclick="editarMinInsumo(\''+it[0]+'\')">'+(low?'<span class="ins-badge">Bajo</span>':'')+'<div class="ins-name">'+it[1]+'</div><div class="ins-qty">'+st.toLocaleString('es-AR')+'</div><div class="ins-min">m\u00ednimo '+(mn||'\u2014')+' \u00b7 toc\u00e1 para editar</div></div>';
+  }).join('');
+  var movs = insumosMov.slice().sort(function(a,b){ return (a.fecha+(a.hora||'')) > (b.fecha+(b.hora||'')) ? -1 : 1; }).slice(0,15);
+  var mc = document.getElementById('insumos-movs');
+  if (mc) mc.innerHTML = movs.length ? movs.map(function(m){
+    var entra=(m.cant||0)>=0, etq=m.tipo==='compra'?'C':m.tipo==='consumo'?'P':'A';
+    var titulo=(m.tipo==='compra'?'Compra':m.tipo==='consumo'?'Producci\u00f3n':'Ajuste')+' \u00b7 '+insumoNombre(m.insumo);
+    var sub=m.tipo==='compra' ? ((m.remito?'Remito '+m.remito+' \u00b7 ':'')+(m.proveedor?m.proveedor+' \u00b7 ':'')+fmtFecha(m.fecha)) : ((m.nota?m.nota+' \u00b7 ':'')+fmtFecha(m.fecha));
+    return '<div class="ins-mov"><div class="mi'+(entra?'':' out')+'">'+etq+'</div><div><div class="mn">'+titulo+'</div><div class="ms">'+sub+'</div></div><div class="mq '+(entra?'in':'out')+'">'+(entra?'+':'\u2212')+Math.abs(m.cant||0).toLocaleString('es-AR')+'</div></div>';
+  }).join('') : '<div style="color:var(--text3);font-size:13px;padding:8px 0">Sin movimientos a\u00fan</div>';
+}
+function llenarSelectInsumo(id){ var sel=document.getElementById(id); if(!sel)return; sel.innerHTML=INSUMOS.map(function(it){ return '<option value="'+it[0]+'">'+it[1]+'</option>'; }).join(''); }
+function abrirCompraInsumo(){
+  llenarSelectInsumo('ci-insumo');
+  document.getElementById('ci-cant').value='0'; document.getElementById('ci-fecha').value=hoy();
+  document.getElementById('ci-prov').value=''; document.getElementById('ci-remito').value=''; document.getElementById('ci-precio').value='0';
+  openModal('modal-insumo-compra');
+}
+async function guardarCompraInsumo(){
+  var ins=document.getElementById('ci-insumo').value;
+  var cant=parseFloat(document.getElementById('ci-cant').value)||0;
+  if(cant<=0){ showToast('Carg\u00e1 una cantidad','\u26a0\ufe0f'); return; }
+  var res=await fbAdd('insumos_mov',{ tipo:'compra', insumo:ins, cant:cant, fecha:document.getElementById('ci-fecha').value||hoy(), hora:ahora(), quien:(currentUser&&currentUser.id)||'', proveedor:document.getElementById('ci-prov').value.trim(), remito:document.getElementById('ci-remito').value.trim(), precio:parseFloat(document.getElementById('ci-precio').value)||0, nota:'' });
+  if(!res.ok){ showToast('No se pudo guardar','\u274c'); return; }
+  closeModal('modal-insumo-compra'); showToast('Compra cargada \u2713'); await sincronizarDatos(); renderInsumos();
+}
+function abrirAjusteInsumo(){ llenarSelectInsumo('aj-insumo'); document.getElementById('aj-motivo').value=''; refrescarAjuste(); openModal('modal-insumo-ajuste'); }
+function refrescarAjuste(){ var k=document.getElementById('aj-insumo').value; document.getElementById('aj-actual').textContent='Stock actual: '+stockInsumo(k).toLocaleString('es-AR'); document.getElementById('aj-nuevo').value=String(stockInsumo(k)); }
+async function guardarAjusteInsumo(){
+  var k=document.getElementById('aj-insumo').value; var nuevo=parseFloat(document.getElementById('aj-nuevo').value)||0; var delta=nuevo-stockInsumo(k);
+  if(delta===0){ showToast('No hay cambios'); return; }
+  var res=await fbAdd('insumos_mov',{ tipo:'ajuste', insumo:k, cant:delta, fecha:hoy(), hora:ahora(), quien:(currentUser&&currentUser.id)||'', proveedor:'', remito:'', precio:0, nota:document.getElementById('aj-motivo').value.trim()||'Ajuste' });
+  if(!res.ok){ showToast('No se pudo guardar','\u274c'); return; }
+  closeModal('modal-insumo-ajuste'); showToast('Ajuste guardado \u2713'); await sincronizarDatos(); renderInsumos();
+}
+function editarMinInsumo(k){ document.getElementById('im-insumo').value=k; document.getElementById('im-titulo').textContent='M\u00ednimo \u00b7 '+insumoNombre(k); document.getElementById('im-valor').value=String(insumosMin[k]||0); openModal('modal-insumo-min'); }
+async function guardarMinInsumo(){
+  var k=document.getElementById('im-insumo').value; var v=parseFloat(document.getElementById('im-valor').value)||0; insumosMin[k]=v;
+  var campos={}; campos['min_'+k]=v;
+  try{ await db.collection('config').doc('app').set(campos,{merge:true}); }catch(e){ showToast('No se pudo guardar','\u274c'); return; }
+  closeModal('modal-insumo-min'); showToast('M\u00ednimo guardado \u2713'); renderInsumos(); if(currentScreen==='dashboard') renderDashboard();
+}
+async function consumirInsumos(mapa, nota){
+  var proms=[], f=hoy(), h=ahora(), q=(currentUser&&currentUser.id)||'';
+  Object.keys(mapa).forEach(function(k){ var c=mapa[k]||0; if(c>0) proms.push(fbAdd('insumos_mov',{ tipo:'consumo', insumo:k, cant:-c, fecha:f, hora:h, quien:q, proveedor:'', remito:'', precio:0, nota:nota||'' })); });
+  if(proms.length){ try{ await Promise.all(proms); }catch(e){} }
 }
 
 // Pantalla "Mi cuenta" (vendedor: su propia liquidación).
@@ -1742,6 +1877,10 @@ var motivosCancelacion = ['Cliente canceló', 'No hay stock', 'Error de carga', 
 var listasPrecios = [];
 // Recibos de liquidación (pagos de los vendedores a la fábrica).
 var recibos = [];
+// Insumos (bolsas y ganchos)
+var INSUMOS = [['envMini','Bolsa Mini'],['envChica','Bolsa Chica'],['envMediana','Bolsa Mediana'],['envGrande','Bolsa Grande'],['ganchos','Ganchos']];
+var insumosMov = [];
+var insumosMin = { envMini:0, envChica:0, envMediana:0, envGrande:0, ganchos:0 };
 // Capacidad en kg de cada formato de bolsa (configurable). Se usa para calcular kg por maquinada.
 var capBolsa = { b17: 1.7, b3: 3, b6: 6, b6t: 6, b12: 12, b12t: 12 };
 var preciosPublico = { b17:0, b3:0, b6:0, b6t:0, b12:0, b12t:0 };
@@ -1889,9 +2028,9 @@ async function sincronizarDatos() {
     var res = await Promise.all([
       fbGetAll('vendedores'), fbGetAll('clientes'), fbGetAll('heladeras'),
       fbGetAll('turnos'), fbGetAll('ajustes'), fbGetAll('mermas'), fbGetAll('ventas'), fbGetAll('pedidos'),
-      fbGetAll('listas_precios'), fbGetAll('recibos'), fbGetAll('embolsados')
+      fbGetAll('listas_precios'), fbGetAll('recibos'), fbGetAll('embolsados'), fbGetAll('insumos_mov')
     ]);
-    var vends=res[0], clis=res[1], hels=res[2], turnsData=res[3], ajustesData=res[4], mermsData=res[5], ventsData=res[6], pedsData=res[7], listasData=res[8], recibosData=res[9], embData=res[10];
+    var vends=res[0], clis=res[1], hels=res[2], turnsData=res[3], ajustesData=res[4], mermsData=res[5], ventsData=res[6], pedsData=res[7], listasData=res[8], recibosData=res[9], embData=res[10], insMovData=res[11];
     var cfgDoc = await db.collection('config').doc('app').get();
     var cfg = cfgDoc.exists ? cfgDoc.data() : null;
 
@@ -1911,6 +2050,8 @@ async function sincronizarDatos() {
     turnos = turnsData.map(function(t){ return { id:t.id, fecha:t.fecha, operario:t.operario, maquina:t.maquina, turno:t.turno||'', numero:parseInt(t.numero)||0, estado:t.estado||'terminada', inicio:t.hsInicio, fin:t.hsFin||'', kg:t.kgProducidos||0, b17:t.bolsas17||0, b3:t.bolsas3||0, b6:t.bolsas6||0, b12:t.bolsas12||0 }; });
     ajustes = ajustesData.map(function(a){ return { id:a.id, fecha:a.fecha, hora:a.hora, usuario:a.usuario||'', motivo:a.motivo||'', nota:a.nota||'', b17:a.d_b17||0, b3:a.d_b3||0, b6:a.d_b6||0, b6t:a.d_b6t||0, b12:a.d_b12||0, b12t:a.d_b12t||0 }; });
     embolsados = embData.map(function(e){ return { id:e.id, fecha:e.fecha, hora:e.hora, operario:e.operario||'', turno:e.turno||'', b6t:e.bolsas6t||0, b12t:e.bolsas12t||0 }; });
+    insumosMov = insMovData.map(function(m){ return { id:m.id, tipo:m.tipo||'compra', insumo:m.insumo||'', cant:parseFloat(m.cant)||0, fecha:m.fecha||'', hora:m.hora||'', quien:m.quien||'', proveedor:m.proveedor||'', remito:m.remito||'', precio:parseFloat(m.precio)||0, nota:m.nota||'' }; });
+    INSUMOS.forEach(function(it){ if (cfg && cfg['min_'+it[0]] != null) insumosMin[it[0]] = parseFloat(cfg['min_'+it[0]])||0; });
     mermas = mermsData.map(function(m){ return { id:m.id, fecha:m.fecha, quien:m.quien, bolsa:m.tipoBolsa, cant:m.cantidad||0, motivo:m.motivo }; });
     ventas = ventsData.map(function(v){ return { id:v.id, fecha:v.fecha, hora:v.hora, vendedor:v.vendedor, cliente:v.cliente, heladera:v.heladera, b17:v.bolsas17||0, b3:v.bolsas3||0, b6:v.bolsas6||0, b12:v.bolsas12||0, pv1:v.pv1||0, pv2:v.pv2||0, pago:v.formaPago, cobrado:v.cobrado }; });
     pedidos = pedsData.map(function(p){ return { id:p.id, estado:p.estado||'pendiente', cliente:p.clienteId, vendedor:p.vendedorId, asignado:p.asignadoA, b17:p.bolsas17||0, b3:p.bolsas3||0, b6:p.bolsas6||0, b6t:p.bolsas6t||0, b12:p.bolsas12||0, b12t:p.bolsas12t||0, aFabrica:p.aFabrica||0, sugerido:p.sugerido||0, cobrado:p.cobrado, pago:p.formaPago, fechaTomado:p.fechaTomado, fechaPreparado:p.fechaPreparado, fechaEntregado:p.fechaEntregado, horaTomado:p.horaTomado||'', horaPreparado:p.horaPreparado||'', horaEntregado:p.horaEntregado||'', motivoCancel:p.motivoCancelacion||'', fechaCancelado:p.fechaCancelado||null, canceladoPor:p.canceladoPor||'', listaId:p.listaId||'', listaNombre:p.listaNombre||'', pct:parseFloat(p.pctFabrica)||0, pu:{ b17:parseFloat(p.pu_b17)||0, b3:parseFloat(p.pu_b3)||0, b6:parseFloat(p.pu_b6)||0, b6t:parseFloat(p.pu_b6t)||0, b12:parseFloat(p.pu_b12)||0, b12t:parseFloat(p.pu_b12t)||0 }, pl:{ b17:parseFloat(p.pl_b17)||0, b3:parseFloat(p.pl_b3)||0, b6:parseFloat(p.pl_b6)||0, b6t:parseFloat(p.pl_b6t)||0, b12:parseFloat(p.pl_b12)||0, b12t:parseFloat(p.pl_b12t)||0 }, ajustadoPor:p.ajustadoPor||'' }; });
@@ -3462,7 +3603,7 @@ async function guardarEmbolsado() {
     turno:document.getElementById('emb-turno').value,
     bolsas6t:b6t, bolsas12t:b12t
   });
-  if (res.ok) { closeModal('modal-embolsado'); showToast('Trizado embolsado ✓'); await sincronizarDatos(); }
+  if (res.ok) { await consumirInsumos({ envMediana:b6t, envGrande:b12t, ganchos:b6t+b12t }, 'Embolsado trizado'); closeModal('modal-embolsado'); showToast('Trizado embolsado ✓'); await sincronizarDatos(); }
 }
 
 // Historial de una rolítera: hoy desplegado; días anteriores colapsados (se tocan para abrir).
@@ -4047,6 +4188,7 @@ async function confirmarMaquinada() {
   if (maqModo === 'finalizar') { campos.estado='terminada'; campos.hsFin=ahora(); campos.fechaFin=hoy(); }
   var res = await fbUpdate('turnos', id, campos);
   if (!res.ok) return;
+  if (maqModo === 'finalizar') { await consumirInsumos({ envMini:b.b17||0, envChica:b.b3||0, envMediana:b.b6||0, envGrande:b.b12||0, ganchos:(b.b6||0)+(b.b12||0) }, 'Maquinada'); }
   closeModal('modal-turno');
   var eraEdicion = (maqModo === 'editar');
   showToast(maqModo === 'finalizar' ? 'Maquinada cerrada ✓' : 'Maquinada actualizada ✓');
